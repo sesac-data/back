@@ -1,0 +1,83 @@
+{
+  "scenario": "requires",
+  "fixture_notice": "TEST FIXTURE ONLY. This is not real policy data and must not be used as source-backed policy content.",
+  "input": {
+    "rule_input": {
+      "company": {
+        "size": "small",
+        "has_replacement_worker": false
+      },
+      "employee": {
+        "leave_type": "parental_leave"
+      }
+    },
+    "requested_months": 4
+  },
+  "candidate_policies": [
+    {
+      "policy_id": "smoke-requires-dependent",
+      "policy_key": "smoke-requires-dependent",
+      "policy_name": "Smoke Requires Dependent Policy Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: approved dependent policy."
+      ],
+      "support_items": [
+        {
+          "support_type": "monthly_fixed",
+          "conditions": [
+            {
+              "condition_id": "company-size-small",
+              "field": "company.size",
+              "operator": "eq",
+              "expected": "small",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: small companies are eligible."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "monthly_fixed",
+            "monthly_amount": 120000,
+            "max_months": 4,
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: dependent policy pays 120000 per month."
+            ]
+          },
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: dependent support item."
+          ]
+        }
+      ],
+      "combination_rules": [
+        {
+          "rule_id": "SMOKE-REQUIRES-BASE",
+          "rule_type": "requires",
+          "target_policy_ids": [
+            "smoke-required-base"
+          ],
+          "reason": "TEST FIXTURE reason: dependent policy requires a missing base policy.",
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: dependent policy requires the base policy."
+          ]
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "valid_combination_count": 0,
+    "rejected_combination_count": 1,
+    "expected_policy_ids": [],
+    "expected_rejected_policy_ids": [
+      [
+        "smoke-requires-dependent"
+      ]
+    ],
+    "total_base_amount": [],
+    "total_bonus_amount": [],
+    "total_subsidy_amount": [],
+    "expected_error_codes": [
+      "requires"
+    ]
+  }
+}

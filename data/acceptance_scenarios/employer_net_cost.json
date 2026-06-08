@@ -1,0 +1,177 @@
+{
+  "scenario": "employer_net_cost",
+  "fixture_notice": "TEST FIXTURE ONLY. This is not real policy data and must not be used as source-backed policy content.",
+  "input": {
+    "rule_input": {
+      "company": {
+        "size": "small",
+        "has_replacement_worker": false
+      },
+      "employee": {
+        "leave_type": "parental_leave"
+      }
+    },
+    "requested_months": 4,
+    "employer_cost_items": [
+      {
+        "cost_id": "COST-GLOBAL-001",
+        "cost_type": "administrative_cost",
+        "description": "TEST FIXTURE explicit administrative cost",
+        "amount": 1000,
+        "applies_to_policy_ids": []
+      },
+      {
+        "cost_id": "COST-POLICY-B-001",
+        "cost_type": "replacement_worker_salary",
+        "description": "TEST FIXTURE explicit replacement worker salary",
+        "amount": 700,
+        "applies_to_policy_ids": [
+          "smoke-net-cost-b"
+        ]
+      },
+      {
+        "cost_id": "COST-AND-001",
+        "cost_type": "combined_operation_cost",
+        "description": "TEST FIXTURE explicit cost only when A and B are both present",
+        "amount": 500,
+        "applies_to_policy_ids": [
+          "smoke-net-cost-a",
+          "smoke-net-cost-b"
+        ]
+      }
+    ]
+  },
+  "candidate_policies": [
+    {
+      "policy_id": "smoke-net-cost-a",
+      "policy_key": "smoke-net-cost-a",
+      "policy_name": "Smoke Net Cost Policy A Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: approved net cost policy A."
+      ],
+      "support_items": [
+        {
+          "support_type": "monthly_fixed",
+          "conditions": [
+            {
+              "condition_id": "company-size-small",
+              "field": "company.size",
+              "operator": "eq",
+              "expected": "small",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: small companies are eligible."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "monthly_fixed",
+            "monthly_amount": 100,
+            "max_months": 6,
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: policy A pays 100 per month."
+            ]
+          },
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: policy A support item."
+          ]
+        }
+      ],
+      "combination_rules": []
+    },
+    {
+      "policy_id": "smoke-net-cost-b",
+      "policy_key": "smoke-net-cost-b",
+      "policy_name": "Smoke Net Cost Policy B Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: approved net cost policy B."
+      ],
+      "support_items": [
+        {
+          "support_type": "monthly_fixed",
+          "conditions": [
+            {
+              "condition_id": "company-size-small",
+              "field": "company.size",
+              "operator": "eq",
+              "expected": "small",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: small companies are eligible."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "monthly_fixed",
+            "monthly_amount": 80,
+            "max_months": 6,
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: policy B pays 80 per month."
+            ]
+          },
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: policy B support item."
+          ]
+        }
+      ],
+      "combination_rules": []
+    }
+  ],
+  "expected": {
+    "valid_combination_count": 3,
+    "rejected_combination_count": 0,
+    "expected_policy_ids": [
+      [
+        "smoke-net-cost-a"
+      ],
+      [
+        "smoke-net-cost-b"
+      ],
+      [
+        "smoke-net-cost-a",
+        "smoke-net-cost-b"
+      ]
+    ],
+    "expected_rejected_policy_ids": [],
+    "total_base_amount": [
+      400,
+      320,
+      720
+    ],
+    "total_bonus_amount": [
+      0,
+      0,
+      0
+    ],
+    "total_subsidy_amount": [
+      400,
+      320,
+      720
+    ],
+    "total_employer_cost": [
+      1000,
+      1700,
+      2200
+    ],
+    "net_employer_cost": [
+      600,
+      1380,
+      1480
+    ],
+    "expected_applied_cost_item_ids": [
+      [
+        "COST-GLOBAL-001"
+      ],
+      [
+        "COST-GLOBAL-001",
+        "COST-POLICY-B-001"
+      ],
+      [
+        "COST-GLOBAL-001",
+        "COST-POLICY-B-001",
+        "COST-AND-001"
+      ]
+    ],
+    "expected_error_codes": []
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "scenario": "base",
+  "fixture_notice": "TEST FIXTURE ONLY. This is not real policy data and must not be used as source-backed policy content.",
+  "input": {
+    "rule_input": {
+      "company": {
+        "size": "small",
+        "has_replacement_worker": false
+      },
+      "employee": {
+        "leave_type": "parental_leave"
+      }
+    },
+    "requested_months": 4
+  },
+  "candidate_policies": [
+    {
+      "policy_id": "smoke-monthly-base",
+      "policy_key": "smoke-monthly-base",
+      "policy_name": "Smoke Monthly Fixed Base Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: approved monthly fixed policy."
+      ],
+      "support_items": [
+        {
+          "support_type": "monthly_fixed",
+          "conditions": [
+            {
+              "condition_id": "company-size-small",
+              "field": "company.size",
+              "operator": "eq",
+              "expected": "small",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: small companies are eligible."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "monthly_fixed",
+            "monthly_amount": 100000,
+            "max_months": 6,
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: support is 100000 per month."
+            ]
+          },
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: monthly fixed support item."
+          ]
+        }
+      ],
+      "combination_rules": []
+    }
+  ]
+}

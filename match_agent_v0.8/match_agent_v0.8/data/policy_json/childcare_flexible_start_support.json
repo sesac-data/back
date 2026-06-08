@@ -1,0 +1,123 @@
+{
+  "policy_name": "육아기10시 출근 지원(워라밸일자리 장려금)",
+  "policy_category": "사업주 지원",
+  "support_items": [
+    {
+      "support_type": "장려금",
+      "target_conditions": [
+        "우선지원대상기업(중소기업 포함)",
+        "중견기업 사업주"
+      ],
+      "conditions": [
+        {
+          "type": "child_age",
+          "value": null,
+          "min": null,
+          "max": 12
+        },
+        {
+          "type": "weekly_work_hours",
+          "value": null,
+          "min": 35,
+          "max": null
+        },
+        {
+          "type": "weekly_work_hours_after_reduction",
+          "value": null,
+          "min": 30,
+          "max": 35
+        },
+        {
+          "type": "daily_work_hour_reduction",
+          "value": 1,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "minimum_duration_months",
+          "value": 1,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "requires_attendance_system",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "attendance_missing_days_per_month",
+          "value": null,
+          "min": null,
+          "max": 3
+        },
+        {
+          "type": "monthly_overtime_hours",
+          "value": null,
+          "min": null,
+          "max": 10
+        },
+        {
+          "type": "requires_labor_agreement",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "requires_contract_change",
+          "value": true,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 300000,
+        "yearly_max_amount": 3600000,
+        "max_duration_months": 12
+      },
+      "required_systems": [
+        "전자·기계적 방법에 의한 근태관리"
+      ],
+      "required_documents": [
+        "신청서",
+        "증빙서류"
+      ],
+      "duplicate_allowed": [
+        "육아기 근로시간 단축(법정 의무제도)과 사용기간 중복 시 하나의 지원금만 지원"
+      ],
+      "important_conditions": [
+        "근로시간 단축에 따른 임금삭감 금지",
+        "취업규칙 등에 소정근로시간 단축에 대해 규정"
+      ],
+      "evidence_snippets": [
+        "전일제 근로자의 육아 사유로 근로시간 단축을 허용한 우선지원대상기업(중소기업 포함) · 중견기업 사업주를 지원합니다.",
+        "육아기* 자녀를 둔 근로자의 신청 등에 따라 근로시간을 단축 * 만 12세 이하 또는 초등학교 6학년 이하",
+        "단축 전 6개월 이상 주 35시간 이상으로 근무한 근로자 대상",
+        "주당 소정근로시간 30시간 초과 ~ 35시간 이하로 단축(단, 매일 1시간은 단축해야함)",
+        "근로시간 단축에 따른 임금삭감 금지",
+        "취업규칙 등에 소정근로시간 단축에 대해 규정",
+        "전자·기계적 방법(붙임 참고)에 의한 근태관리 * 출퇴근기록 누락일수가 월 3일 초과(4일 이상) 시 해당월의 장려금은 지원하지 않음",
+        "최소 1개월 이상 근로시간 단축",
+        "연장근로 제한(월 10시간 초과시 해당월 부지급)",
+        "월 30만원",
+        "지급일로부터 최대 1년",
+        "전년도 말일 고용보험 피보험자 수의 30% (피보험자수가 10명 미만일 경우 3명) 한도로 최대 30명 * 단, 워라밸알자리 장려금(소정근로시간단축) 지원인원과 합산하여 산정함"
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": 0.3,
+    "max_people_limit": 30
+  },
+  "application_process": [
+    "취업규칙 등에 소정근로시간 단축관리 규정 마련",
+    "단축기간 최소 1개월 이상 연속 사용",
+    "온라인: 고용24 홈페이지(www.work24.go.kr) → 로그인→ 기업 → 기업지원금 → 유연근무 → 근로시간 단축 → 워라밸일자리 장려금(소정근로시간 단축, 육아기 10시 출근제)",
+    "오프라인: 관할 고용센터(기업지원부서)서류 상시 접수",
+    "최초 활용한 다음 달부터 3개월마다 신청"
+  ],
+  "risk_conditions": [
+    "출퇴근기록 누락일수가 월 3일 초과(4일 이상) 시 해당월의 장려금은 지원하지 않음",
+    "연장근로 제한(월 10시간 초과시 해당월 부지급)"
+  ]
+}

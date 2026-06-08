@@ -1,0 +1,140 @@
+{
+  "policy_name": "시스템 지원(일･생활균형 시스템)",
+  "policy_category": "사업주 지원",
+  "support_items": [
+    {
+      "support_type": "설치비 및 사용료 지원",
+      "target_conditions": [],
+      "conditions": [
+        {
+          "type": "requires_business_plan_submission",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "requires_employment_center_approval",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "installation_after_application",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "facility_usage_period",
+          "value": null,
+          "min": 2,
+          "max": 2
+        }
+      ],
+      "support": {
+        "monthly_amount": null,
+        "yearly_max_amount": null,
+        "max_duration_months": 24
+      },
+      "required_systems": [
+        "출퇴근 및 인사관리시스템",
+        "보안시스템",
+        "정보시스템"
+      ],
+      "required_documents": [
+        "사업계획서"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "① 고용센터에 사업계획서 제출 및 고용센터의 심사·승인",
+        "② 참여신청일 이후 설치·취득하는 프로그램, 시설, 장비 지원",
+        "③ 지원대상 시설의 사용의무기간 준수",
+        "* (구축형 방식) 2년, (사용료 방식) 2년 이내의 개별 약정사용기간"
+      ]
+    },
+    {
+      "support_type": "투자비용 지원",
+      "target_conditions": [],
+      "conditions": [
+        {
+          "type": "investment_cost_support_ratio",
+          "value": 0.8,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "investment_cost_support_max",
+          "value": 10000000,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": null,
+        "yearly_max_amount": 10000000,
+        "max_duration_months": null
+      },
+      "required_systems": [
+        "출퇴근 등 관리시스템",
+        "보안시스템"
+      ],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "유연근무, 근로시간 단축, 시간단위 연차, 일･가정양립 제도를 활용하기 위해 취득 또는 사용하는 출퇴근 등 관리시스템 및 보안시스템 등 투자비용의 80%를 1,000만원 범위 내에 설치비 및 사용료 지원"
+      ]
+    },
+    {
+      "support_type": "소규모기업 출퇴근관리시스템 사용료 지원",
+      "target_conditions": [
+        {
+          "type": "employee_count",
+          "value": null,
+          "min": null,
+          "max": 29
+        }
+      ],
+      "conditions": [
+        {
+          "type": "management_system_usage_fee_support_1year",
+          "value": 1800000,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "management_system_usage_fee_support_2years",
+          "value": 3600000,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 150000,
+        "yearly_max_amount": 1800000,
+        "max_duration_months": 24
+      },
+      "required_systems": [
+        "출퇴근 등 관리시스템"
+      ],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "* 30인 미만 소규모기업의 출퇴근 등 관리시스템 사용료는 1년 180만원(2년 360만원) 한도 전액 지원"
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": null,
+    "max_people_limit": null
+  },
+  "application_process": [
+    "사업계획서 제출(사업주→관할 고용센터)",
+    "심사/승인(관할 고용센터)",
+    "시스템 투자(사업주)",
+    "지원금 신청(사업주→관할 고용센터)"
+  ],
+  "risk_conditions": []
+}

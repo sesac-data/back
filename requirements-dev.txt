@@ -1,0 +1,6 @@
+-r match_agent_v0.8/match_agent_v0.8/requirements.txt
+
+pytest>=8.0.0
+SQLAlchemy>=2.0.0
+psycopg2-binary>=2.9.0
+

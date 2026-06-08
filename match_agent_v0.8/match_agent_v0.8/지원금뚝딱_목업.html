@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>지원금뚝딱 — SaaS 목업 v2</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #F0F4F8; }
+    input, textarea, button { font-family: 'Noto Sans KR', sans-serif; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #C8D6DE; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const C = {
+      bg: "#F0F4F8", white: "#FFFFFF",
+      mint: "#2BC49A", mintLight: "#E6F9F3", teal: "#1A9C7A", tealDark: "#157A60",
+      blue: "#3A7BD5", blueLight: "#EAF1FB",
+      gray50: "#F8FAFB", gray100: "#F0F3F6", gray200: "#E0E8EE", gray300: "#C8D6DE",
+      gray400: "#94A8B6", gray600: "#546E7A", gray800: "#263238",
+      red: "#E53935", redLight: "#FEECEB",
+      orange: "#F57C00", orangeLight: "#FFF3E0",
+      yellow: "#F9A825", yellowLight: "#FFFDE7",
+      purple: "#7C4DFF", purpleLight: "#EDE7FF",
+    };
+
+    const Card = ({ children, style = {} }) => (
+      <div style={{ background: C.white, borderRadius: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)", padding: 20, ...style }}>
+        {children}
+      </div>
+    );
+
+    const Badge = ({ children, color, textColor, style = {} }) => (
+      <span style={{ background: color || C.mintLight, color: textColor || C.teal, borderRadius: 20, padding: "2px 9px", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", ...style }}>
+        {children}
+      </span>
+    );
+
+    const Btn = ({ children, onClick, style = {}, variant = "primary", size = "md" }) => {
+      const base = { borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 600, fontFamily: "inherit" };
+      const variants = {
+        primary: { background: C.mint, color: "#fff" },
+        outline: { background: "#fff", color: C.mint, border: `1.5px solid ${C.mint}` },
+        ghost: { background: "transparent", color: C.gray600, border: `1px solid ${C.gray200}` },
+        danger: { background: C.redLight, color: C.red },
+        blue: { background: C.blue, color: "#fff" },
+      };
+      const sizes = { sm: { padding: "4px 12px", fontSize: 11 }, md: { padding: "7px 16px", fontSize: 13 }, lg: { padding: "10px 22px", fontSize: 14 } };
+      return <button onClick={onClick} style={{ ...base, ...variants[variant], ...sizes[size], ...style }}>{children}</button>;
+    };
+
+    // ── 사이드바 ──────────────────────────────────────────────────────
+    const MENUS = [
+      { id: "home", icon: "🏠", label: "홈" },
+      { id: "company", icon: "🏢", label: "기업 관리" },
+      { id: "workflow", icon: "📋", label: "신청 관리" },
+      { id: "application", icon: "✏️", label: "신청서 작성" },
+    ];
+
+    const Sidebar = ({ page, setPage }) => (
+      <div style={{ width: 196, background: C.gray800, display: "flex", flexDirection: "column", padding: "20px 0", minHeight: "100vh", flexShrink: 0 }}>
+        <div style={{ padding: "0 18px 22px", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 32, height: 32, background: C.mint, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>⚡</div>
+          <span style={{ fontWeight: 800, fontSize: 15, color: "#fff" }}>지원금뚝딱</span>
+        </div>
+        {MENUS.map(m => (
+          <button key={m.id} onClick={() => setPage(m.id)} style={{
+            display: "flex", alignItems: "center", gap: 10, padding: "10px 18px",
+            background: page === m.id ? "rgba(43,196,154,0.18)" : "transparent",
+            color: page === m.id ? C.mint : "rgba(255,255,255,0.6)",
+            border: "none", cursor: "pointer", fontWeight: page === m.id ? 700 : 500,
+            fontSize: 13, textAlign: "left",
+            borderLeft: page === m.id ? `3px solid ${C.mint}` : "3px solid transparent",
+          }}>
+            <span style={{ fontSize: 15 }}>{m.icon}</span>{m.label}
+          </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        <div style={{ padding: "14px 18px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>노무법인 한빛</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>관리자</div>
+        </div>
+      </div>
+    );
+
+    // ══════════════════════════════════════════════════════════════════
+    // HOME PAGE
+    // ══════════════════════════════════════════════════════════════════
+    const ALERTS = [
+      { icon: "🚨", company: "A기업", msg: "청년일자리도약장려금 신규채용 3개월 도달 — 2026.6.1까지 신청서 제출 필수!", dday: "D-12", color: C.red },
+      { icon: "⚠️", company: "B기업", msg: "청년채용특별장려금 — 3일 후 신청마감 (2026-02-19 09:00)", dday: "D-3", color: C.orange },
+      { icon: "💡", company: "C기업", msg: "고용촉진장려금 신규 매칭 — 신청 시 월 60만원 수령 가능", dday: "신규", color: C.blue },
+    ];
+
+    const COMPANIES_SUMMARY = [
+      { name: "A기업", grants: 2, status: "신청중", workflow: 4 },
+      { name: "B기업", grants: 1, status: "작성중", workflow: 3 },
+      { name: "C기업", grants: 3, status: "매칭완료", workflow: 2 },
+      { name: "D기업", grants: 0, status: "등록완료", workflow: 1 },
+    ];
+
+    const HomePage = ({ setPage }) => (
+      <div style={{ padding: 28, maxWidth: 1060 }}>
+        <div style={{ marginBottom: 22 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: C.gray800, margin: 0 }}>대시보드</h2>
+          <p style={{ color: C.gray400, fontSize: 13, margin: "4px 0 0" }}>2026년 3월 12일 기준</p>
+        </div>
+
+        {/* KPI */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 22 }}>
+          {[
+            { label: "관리 기업 수", val: "4개사", icon: "🏢", color: C.blue, sub: "전월 대비 +1" },
+            { label: "신청 완료", val: "3건", icon: "✅", color: C.mint, sub: "이번 달 기준" },
+            { label: "신청서 작성중", val: "2건", icon: "✏️", color: C.orange, sub: "완료 대기중" },
+            { label: "신청 가능 지원금", val: "6건", icon: "🎯", color: C.purple, sub: "매칭 완료" },
+          ].map(s => (
+            <Card key={s.label} style={{ padding: "16px 18px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 11, color: C.gray400, marginBottom: 4 }}>{s.label}</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.val}</div>
+                  <div style={{ fontSize: 11, color: C.gray400, marginTop: 2 }}>{s.sub}</div>
+                </div>
+                <span style={{ fontSize: 26, opacity: 0.8 }}>{s.icon}</span>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 18 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: C.gray800 }}>🔔 긴급 알림</div>
+              <span style={{ fontSize: 11, color: C.gray400 }}>최신순</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+              {ALERTS.map((a, i) => (
+                <Card key={i} style={{ padding: "12px 16px", borderLeft: `4px solid ${a.color}`, display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 20 }}>{a.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 2 }}>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: C.gray800 }}>{a.company}</span>
+                      <Badge color={a.color + "22"} textColor={a.color}>{a.dday}</Badge>
+                    </div>
+                    <div style={{ fontSize: 12, color: C.gray600 }}>{a.msg}</div>
+                  </div>
+                  <Btn size="sm" variant="ghost" onClick={() => {}}>바로가기 →</Btn>
+                </Card>
+              ))}
+            </div>
+
+            <div style={{ fontWeight: 700, fontSize: 14, color: C.gray800, marginBottom: 10 }}>📊 기업별 현황</div>
+            <Card style={{ padding: 0, overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: C.gray50 }}>
+                    {["기업명", "매칭 지원금", "상태", "워크플로우 진행", ""].map(h => (
+                      <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: C.gray400, fontWeight: 700, borderBottom: `1px solid ${C.gray200}`, fontSize: 11 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPANIES_SUMMARY.map((c, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${C.gray100}` }}>
+                      <td style={{ padding: "10px 14px", fontWeight: 600, color: C.gray800 }}>{c.name}</td>
+                      <td style={{ padding: "10px 14px" }}>
+                        <Badge color={c.grants > 0 ? C.mintLight : C.gray100} textColor={c.grants > 0 ? C.teal : C.gray400}>{c.grants}건</Badge>
+                      </td>
+                      <td style={{ padding: "10px 14px" }}>
+                        <Badge
+                          color={c.status === "신청중" ? C.mintLight : c.status === "작성중" ? C.orangeLight : c.status === "매칭완료" ? C.blueLight : C.gray100}
+                          textColor={c.status === "신청중" ? C.teal : c.status === "작성중" ? C.orange : c.status === "매칭완료" ? C.blue : C.gray400}
+                        >{c.status}</Badge>
+                      </td>
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+                          {[1,2,3,4,5].map(step => (
+                            <div key={step} style={{ width: 18, height: 6, borderRadius: 3, background: step <= c.workflow ? C.mint : C.gray200 }} />
+                          ))}
+                          <span style={{ fontSize: 10, color: C.gray400, marginLeft: 4 }}>Step {c.workflow}/5</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "10px 14px" }}>
+                        <Btn size="sm" variant="ghost" onClick={() => {}}>관리 →</Btn>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+
+          {/* 오른쪽 패널 */}
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: C.gray800, marginBottom: 10 }}>🔄 신청 워크플로우</div>
+            <Card style={{ padding: 16, marginBottom: 18 }}>
+              {[
+                { step: 1, icon: "👥", label: "채용 이슈 확인", desc: "직원 조건·채용 현황 파악", color: C.blue },
+                { step: 2, icon: "🎯", label: "지원금 매칭", desc: "AI 자동 매칭 및 충돌 검토", color: C.purple },
+                { step: 3, icon: "🤝", label: "위탁운영기관 협약", desc: "협약서 제출 및 기관 지정", color: C.orange },
+                { step: 4, icon: "✏️", label: "신청서 작성", desc: "AI 자동 작성 + 서류 준비", color: C.mint },
+                { step: 5, icon: "🚀", label: "제출 완료", desc: "최종 검토 후 제출", color: C.teal },
+              ].map((s, i, arr) => (
+                <div key={s.step}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: s.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
+                        {s.step}
+                      </div>
+                      {i < arr.length - 1 && <div style={{ width: 2, height: 22, background: C.gray200, margin: "2px 0" }} />}
+                    </div>
+                    <div style={{ paddingTop: 4 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.gray800 }}>{s.icon} {s.label}</div>
+                      <div style={{ fontSize: 11, color: C.gray400 }}>{s.desc}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </Card>
+
+            <div style={{ fontWeight: 700, fontSize: 14, color: C.gray800, marginBottom: 10 }}>📅 이번 달 마감 일정</div>
+            <Card style={{ padding: 14 }}>
+              {[
+                { date: "03.15", label: "A기업 서류 보완", color: C.red },
+                { date: "03.19", label: "B기업 신청 마감", color: C.orange },
+                { date: "03.28", label: "C기업 협약서 제출", color: C.blue },
+                { date: "04.01", label: "D기업 매칭 시작", color: C.mint },
+              ].map((d, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: "6px 0", borderBottom: i < 3 ? `1px solid ${C.gray100}` : "none" }}>
+                  <div style={{ width: 38, fontSize: 11, fontWeight: 700, color: d.color }}>{d.date}</div>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: d.color, flexShrink: 0 }} />
+                  <div style={{ fontSize: 12, color: C.gray600 }}>{d.label}</div>
+                </div>
+              ))}
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+
+    // ══════════════════════════════════════════════════════════════════
+    // COMPANY PAGE
+    // ══════════════════════════════════════════════════════════════════
+    const EMPLOYEE_FIELDS = ["성명","생년월일","입사일","퇴사일","고용형태","주근로시간","급여(월)","고용보험형태","외국인비자","취약계층여부","최종학력","전공"];
+    const EMPLOYEES_DATA = [
+      { 성명:"김민준", 생년월일:"1998-04-12", 입사일:"2024-01-15", 퇴사일:"-", 고용형태:"정규직", 주근로시간:"40h", "급여(월)":"280만", 고용보험형태:"일반", 외국인비자:"-", 취약계층여부:"해당없음", 최종학력:"대졸", 전공:"경영" },
+      { 성명:"이서연", 생년월일:"2000-09-30", 입사일:"2025-03-01", 퇴사일:"-", 고용형태:"계약직", 주근로시간:"40h", "급여(월)":"250만", 고용보험형태:"일반", 외국인비자:"-", 취약계층여부:"확인필요", 최종학력:"대졸", 전공:"컴공" },
+      { 성명:"박지훈", 생년월일:"2001-02-20", 입사일:"2026-02-01", 퇴사일:"-", 고용형태:"정규직", 주근로시간:"40h", "급여(월)":"260만", 고용보험형태:"일반", 외국인비자:"-", 취약계층여부:"해당없음", 최종학력:"대졸", 전공:"경제" },
+    ];
+
+    const CompanyPage = () => {
+      const [ocrDone, setOcrDone] = useState(false);
+      const [excelUploaded, setExcelUploaded] = useState(false);
+      const [showFieldInfo, setShowFieldInfo] = useState(false);
+
+      return (
+        <div style={{ padding: 28, maxWidth: 1060 }}>
+          <div style={{ marginBottom: 18 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: C.gray800, margin: 0 }}>기업 관리</h2>
+            <p style={{ color: C.gray400, fontSize: 13, margin: "4px 0 0" }}>기업 정보 등록과 직원 데이터를 한 화면에서 관리합니다</p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+            {/* 기업 등록 */}
+            <Card style={{ padding: 18 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: C.gray800, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                🏢 기업 등록
+                {ocrDone && <Badge color={C.mintLight} textColor={C.teal} style={{ marginLeft: 4 }}>✅ OCR 완료</Badge>}
+              </div>
+              <div onClick={() => setOcrDone(true)} style={{ border: `1.5px dashed ${ocrDone ? C.mint : C.gray300}`, borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", background: ocrDone ? C.mintLight : C.gray50, marginBottom: 12 }}>
+                <span style={{ fontSize: 22 }}>📄</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: ocrDone ? C.teal : C.gray600 }}>{ocrDone ? "사업자등록증.pdf" : "사업자등록증 업로드"}</div>
+                  <div style={{ fontSize: 11, color: C.gray400 }}>{ocrDone ? "OCR 자동 추출 완료" : "클릭하여 업로드 · PDF/JPG/PNG"}</div>
+                </div>
+                {ocrDone ? <span style={{ color: C.mint, fontSize: 18 }}>✓</span> : <Btn size="sm" variant="outline">업로드</Btn>}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                {[["법인명","(주)테크솔루션"],["사업자번호","123-45-67890"],["대표자","홍길동"],["표준산업분류코드","J62010"],["업종","소프트웨어 개발"],["설립일","2020-03-15"],["상시근로자","8명"],["전화번호","02-1234-5678"]].map(([label, val]) => (
+                  <div key={label}>
+                    <label style={{ fontSize: 10, color: C.gray400, display: "block", marginBottom: 2 }}>{label}</label>
+                    <input defaultValue={val} style={{ width: "100%", border: `1px solid ${C.gray200}`, borderRadius: 6, padding: "5px 8px", fontSize: 12, outline: "none", background: ocrDone ? "#fff" : C.gray50 }} />
+                  </div>
+                ))}
+              </div>
+              <Btn style={{ width: "100%", marginTop: 12 }} size="sm">저장</Btn>
+            </Card>
+
+            {/* 직원 데이터 */}
+            <Card style={{ padding: 18 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: C.gray800, marginBottom: 6 }}>👥 직원 데이터 등록</div>
+              <div style={{ fontSize: 12, color: C.gray400, marginBottom: 12 }}>엑셀 양식을 다운받아 입력 후 업로드하세요.</div>
+              <button onClick={() => setShowFieldInfo(!showFieldInfo)} style={{ width: "100%", background: C.blueLight, color: C.blue, border: "none", borderRadius: 7, padding: "7px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <span>📋 포함 필드 안내 ({EMPLOYEE_FIELDS.length}개 항목)</span>
+                <span>{showFieldInfo ? "▲" : "▼"}</span>
+              </button>
+              {showFieldInfo && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
+                  {EMPLOYEE_FIELDS.map(f => (
+                    <span key={f} style={{ background: C.blueLight, color: C.blue, borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: 600 }}>{f}</span>
+                  ))}
+                  <div style={{ fontSize: 10, color: C.gray400, width: "100%", marginTop: 4 }}>* 취약계층 항목은 개인정보동의서 기반으로 입력</div>
+                </div>
+              )}
+              <div style={{ border: `1px solid ${C.gray200}`, borderRadius: 8, padding: "10px 14px", marginBottom: 8, display: "flex", alignItems: "center", gap: 10, background: C.gray50 }}>
+                <span style={{ fontSize: 20 }}>📥</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.gray800 }}>직원데이터_양식.xlsx</div>
+                  <div style={{ fontSize: 11, color: C.gray400 }}>12개 필드 포함된 표준 양식</div>
+                </div>
+                <Btn size="sm" variant="outline" onClick={() => alert("📥 다운로드 시작!")}>다운로드</Btn>
+              </div>
+              <div onClick={() => setExcelUploaded(true)} style={{ border: `1.5px dashed ${excelUploaded ? C.mint : C.gray300}`, borderRadius: 8, padding: "14px", textAlign: "center", cursor: "pointer", background: excelUploaded ? C.mintLight : "#fff", marginBottom: 10 }}>
+                {excelUploaded ? (
+                  <div style={{ color: C.teal, fontWeight: 600, fontSize: 13 }}>✅ 직원데이터_2026.xlsx 업로드 완료</div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 24, marginBottom: 4 }}>📂</div>
+                    <div style={{ fontSize: 12, color: C.gray400 }}>작성 완료된 엑셀 파일 업로드</div>
+                  </div>
+                )}
+              </div>
+              {excelUploaded && (
+                <div style={{ background: C.mintLight, borderRadius: 7, padding: "8px 12px", fontSize: 12, color: C.teal, fontWeight: 600, marginBottom: 8 }}>
+                  ✅ 3명 직원 데이터 적용 완료 — 지원금 매칭 준비됨
+                </div>
+              )}
+              <Btn style={{ width: "100%" }} variant={excelUploaded ? "primary" : "ghost"} size="sm">
+                {excelUploaded ? "🎯 지원금 매칭 시작" : "파일 업로드 후 매칭 가능"}
+              </Btn>
+            </Card>
+          </div>
+
+          {/* 직원 테이블 */}
+          <Card style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `1px solid ${C.gray100}` }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: C.gray800 }}>👥 직원 목록 ({EMPLOYEES_DATA.length}명)</div>
+              <Btn size="sm" variant="outline">+ 직원 추가</Btn>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: C.gray50 }}>
+                    {EMPLOYEE_FIELDS.map(f => (
+                      <th key={f} style={{ padding: "8px 10px", textAlign: "left", color: C.gray400, fontWeight: 700, borderBottom: `1px solid ${C.gray200}`, whiteSpace: "nowrap" }}>{f}</th>
+                    ))}
+                    <th style={{ padding: "8px 10px", color: C.gray400, fontWeight: 700, borderBottom: `1px solid ${C.gray200}` }}>관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {EMPLOYEES_DATA.map((emp, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${C.gray100}`, background: emp["취약계층여부"] === "확인필요" ? C.orangeLight : "transparent" }}>
+                      {EMPLOYEE_FIELDS.map(f => (
+                        <td key={f} style={{ padding: "8px 10px", color: f === "취약계층여부" && emp[f] === "확인필요" ? C.orange : C.gray800, fontWeight: f === "취약계층여부" && emp[f] === "확인필요" ? 700 : 400, whiteSpace: "nowrap" }}>
+                          {emp[f]}
+                        </td>
+                      ))}
+                      <td style={{ padding: "8px 10px" }}>
+                        <Btn size="sm" variant="ghost" style={{ fontSize: 11, padding: "3px 8px" }}>수정</Btn>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      );
+    };
+
+    // ══════════════════════════════════════════════════════════════════
+    // WORKFLOW PAGE
+    // ══════════════════════════════════════════════════════════════════
+    const WORKFLOW_STEPS = ["채용이슈", "지원금매칭", "위탁협약", "신청서작성", "제출완료"];
+    const STEP_ICONS = ["👥", "🎯", "🤝", "✏️", "🚀"];
+
+    const COMPANIES_WF = [
+      { name: "A기업", industry: "소프트웨어", employees: 8, step: 4,
+        grants: [
+          { name: "청년일자리도약장려금", amount: "월 60만", emp: "김민준", status: "작성중", prob: 92, dday: "D-12", conflict: false },
+          { name: "청년채용특별장려금", amount: "월 80만", emp: "이서연", status: "작성중", prob: 88, dday: "D-12", conflict: false },
+        ]
+      },
+      { name: "B기업", industry: "제조업", employees: 15, step: 3,
+        grants: [
+          { name: "고용촉진장려금", amount: "월 60만", emp: "박민수", status: "협약대기", prob: 78, dday: "D-3", conflict: true },
+        ]
+      },
+      { name: "C기업", industry: "서비스업", employees: 5, step: 2,
+        grants: [
+          { name: "청년일자리도약장려금", amount: "월 60만", emp: "최유진", status: "매칭완료", prob: 85, dday: "-", conflict: false },
+          { name: "청년채용특별장려금", amount: "월 80만", emp: "최유진", status: "매칭완료", prob: 80, dday: "-", conflict: true },
+          { name: "고용촉진장려금", amount: "월 60만", emp: "최유진", status: "매칭완료", prob: 70, dday: "-", conflict: false },
+        ]
+      },
+      { name: "D기업", industry: "도소매업", employees: 3, step: 1, grants: [] },
+    ];
+
+    const WorkflowPage = ({ setPage, setAppData }) => {
+      const [selectedCompany, setSelectedCompany] = useState(0);
+      const co = COMPANIES_WF[selectedCompany];
+
+      return (
+        <div style={{ padding: 28, maxWidth: 1060 }}>
+          <div style={{ marginBottom: 18 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: C.gray800, margin: 0 }}>신청 관리</h2>
+            <p style={{ color: C.gray400, fontSize: 13, margin: "4px 0 0" }}>기업별 채용지원금 신청 워크플로우를 관리합니다</p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16 }}>
+            {/* 기업 리스트 */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.gray400, marginBottom: 8 }}>관리 기업</div>
+              {COMPANIES_WF.map((c, i) => (
+                <button key={i} onClick={() => setSelectedCompany(i)} style={{
+                  width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                  background: selectedCompany === i ? C.mint : C.white,
+                  color: selectedCompany === i ? "#fff" : C.gray800,
+                  border: "none", cursor: "pointer", borderRadius: 10, marginBottom: 6,
+                  fontWeight: selectedCompany === i ? 700 : 500, fontSize: 13,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)", textAlign: "left"
+                }}>
+                  <span>🏢</span>
+                  <div style={{ flex: 1 }}>
+                    <div>{c.name}</div>
+                    <div style={{ fontSize: 10, opacity: 0.7 }}>{c.industry} · {c.employees}명</div>
+                  </div>
+                  <div style={{ fontSize: 10, background: selectedCompany === i ? "rgba(255,255,255,0.25)" : C.gray100, borderRadius: 10, padding: "1px 7px", color: selectedCompany === i ? "#fff" : C.gray400 }}>
+                    Step {c.step}
+                  </div>
+                </button>
+              ))}
+              <Btn variant="outline" size="sm" style={{ width: "100%", marginTop: 6 }}>+ 기업 추가</Btn>
+            </div>
+
+            {/* 워크플로우 */}
+            <div>
+              {/* 스텝바 */}
+              <Card style={{ padding: "16px 20px", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  {WORKFLOW_STEPS.map((s, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", flex: i < WORKFLOW_STEPS.length - 1 ? 1 : 0 }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        <div style={{
+                          width: 36, height: 36, borderRadius: "50%",
+                          background: i < co.step ? C.mint : i === co.step ? C.blue : C.gray200,
+                          color: i <= co.step ? "#fff" : C.gray400,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800,
+                          boxShadow: i === co.step ? `0 0 0 3px ${C.blueLight}` : "none"
+                        }}>
+                          {i < co.step ? "✓" : STEP_ICONS[i]}
+                        </div>
+                        <div style={{ fontSize: 10, color: i < co.step ? C.teal : i === co.step ? C.blue : C.gray400, fontWeight: i === co.step ? 700 : 500, whiteSpace: "nowrap" }}>{s}</div>
+                      </div>
+                      {i < WORKFLOW_STEPS.length - 1 && (
+                        <div style={{ flex: 1, height: 3, background: i < co.step - 1 ? C.mint : C.gray200, margin: "0 4px", marginBottom: 18, borderRadius: 2 }} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* 충돌/AI 추천 */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                {co.step === 1 && (
+                  <Card style={{ gridColumn: "1/-1", background: C.blueLight, border: `1px solid ${C.blue}33`, padding: 16 }}>
+                    <div style={{ fontWeight: 700, color: C.blue, marginBottom: 6 }}>👥 Step 1: 채용 이슈 확인</div>
+                    <div style={{ fontSize: 13, color: C.gray600 }}>직원 데이터를 등록하고 채용 조건을 확인하세요.</div>
+                    <Btn size="sm" style={{ marginTop: 10 }}>기업 관리 이동 →</Btn>
+                  </Card>
+                )}
+                {co.step >= 2 && co.grants.some(g => g.conflict) && (
+                  <Card style={{ background: C.orangeLight, border: `1px solid ${C.orange}44` }}>
+                    <div style={{ fontWeight: 700, color: C.orange, fontSize: 13, marginBottom: 8 }}>⚠️ 충돌 검토</div>
+                    <div style={{ fontSize: 12, color: C.gray800, lineHeight: 1.6 }}>
+                      동일 직원 중복 신청 불가.<br />
+                      <strong style={{ color: C.teal }}>청년채용특별장려금 신청 시 월 120만원 추가 수령 가능</strong>
+                    </div>
+                  </Card>
+                )}
+                {co.step >= 2 && (
+                  <Card style={{ background: C.mintLight, border: `1px solid ${C.mint}44` }}>
+                    <div style={{ fontWeight: 700, color: C.teal, fontSize: 13, marginBottom: 8 }}>💡 AI 추천</div>
+                    <div style={{ fontSize: 12, color: C.gray800, lineHeight: 1.6 }}>
+                      청년조건·신규채용 기준으로<br />
+                      <strong>청년채용특별장려금</strong>이 가장 높은 확률 (88%)
+                    </div>
+                  </Card>
+                )}
+              </div>
+
+              {/* 지원금 목록 */}
+              {co.grants.map((g, i) => (
+                <Card key={i} style={{ marginBottom: 10, padding: 0, overflow: "hidden" }}>
+                  <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, borderLeft: `4px solid ${g.conflict ? C.orange : C.mint}` }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
+                        <span style={{ fontWeight: 700, fontSize: 14, color: C.gray800 }}>{g.name}</span>
+                        <Badge color={C.mintLight} textColor={C.teal}>{g.prob}% 가능</Badge>
+                        {g.conflict && <Badge color={C.orangeLight} textColor={C.orange}>⚠️ 충돌</Badge>}
+                        {g.dday !== "-" && <Badge color={C.redLight} textColor={C.red}>{g.dday}</Badge>}
+                      </div>
+                      <div style={{ fontSize: 12, color: C.gray400 }}>💰 {g.amount} &nbsp;·&nbsp; 👤 {g.emp} &nbsp;·&nbsp; 상태: <strong style={{ color: g.status === "작성중" ? C.orange : g.status === "매칭완료" ? C.blue : C.mint }}>{g.status}</strong></div>
+                    </div>
+                    {co.step >= 3 ? (
+                      <Btn size="sm" variant="outline" onClick={() => { setAppData({ grant: g.name, emp: g.emp, company: co.name }); setPage("application"); }}>
+                        신청서 작성
+                      </Btn>
+                    ) : (
+                      <Btn size="sm" variant="ghost">협약 후 신청 가능</Btn>
+                    )}
+                  </div>
+                </Card>
+              ))}
+
+              {co.grants.length === 0 && (
+                <Card style={{ textAlign: "center", padding: 32, color: C.gray400 }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                  <div style={{ fontSize: 13 }}>직원 데이터 등록 후 지원금 매칭이 시작됩니다</div>
+                </Card>
+              )}
+
+              {co.step >= 3 && (
+                <Card style={{ marginTop: 14, padding: 14, border: `1px solid ${co.step >= 4 ? C.mint : C.orange}55`, background: co.step >= 4 ? C.mintLight : "#fff" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 22 }}>🤝</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: C.gray800 }}>위탁운영기관 협약</div>
+                      <div style={{ fontSize: 11, color: C.gray400 }}>신청서 제출 전 협약서 제출 필수</div>
+                    </div>
+                    <Badge color={co.step >= 4 ? C.mintLight : C.orangeLight} textColor={co.step >= 4 ? C.teal : C.orange}>
+                      {co.step >= 4 ? "✅ 협약완료" : "⏳ 진행중"}
+                    </Badge>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // ══════════════════════════════════════════════════════════════════
+    // APPLICATION PAGE
+    // ══════════════════════════════════════════════════════════════════
+    const DOCS_LIST = {
+      "위탁운영기관": [
+        { name: "위탁운영기관 협약서", status: "pending" },
+        { name: "운영계획서", status: "done" },
+      ],
+      "기업": [
+        { name: "사업기획서", status: "inprogress", warn: "보완 필요" },
+        { name: "사업자등록증", status: "done" },
+        { name: "표준산업분류코드 확인서", status: "pending", warn: "확인필요" },
+        { name: "고용보험 가입확인서", status: "done" },
+      ],
+      "직원": [
+        { name: "근로계약서 (이서연)", status: "inprogress" },
+        { name: "주민등록등본 (이서연)", status: "pending" },
+        { name: "개인정보동의서 (이서연)", status: "pending" },
+      ],
+    };
+
+    const ST = {
+      done: { label: "작성완료", color: C.mint, icon: "✅" },
+      inprogress: { label: "진행중", color: C.orange, icon: "🔄" },
+      pending: { label: "미작성", color: C.gray400, icon: "⬜" },
+    };
+
+    const FormViewer = ({ formData }) => (
+      <div style={{ background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "28px 32px", fontSize: 12, lineHeight: 1.8 }}>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: "#333", marginBottom: 4 }}>■ [서식 9]</div>
+          <div style={{ display: "flex", gap: 16, fontSize: 11, marginBottom: 4 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 4 }}><input type="checkbox" /> (단 독)</label>
+            <label style={{ display: "flex", alignItems: "center", gap: 4 }}><input type="checkbox" /> (컨소시엄)</label>
+          </div>
+          <div style={{ textAlign: "center", fontSize: 16, fontWeight: 700, margin: "10px 0", letterSpacing: 1 }}>
+            『청년일자리도약장려금 사업』 운영기관 지정 신청서
+          </div>
+        </div>
+
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 0, fontSize: 11 }}>
+          <tbody>
+            <tr>
+              <td rowSpan="6" style={{ border: "1px solid #666", padding: "6px 8px", textAlign: "center", width: 60, verticalAlign: "middle", background: "#f5f5f5", fontWeight: 600, lineHeight: 2 }}>
+                기<br/>관<br/>현<br/>황<br/>(운영기관)
+              </td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", width: 90, background: "#f9f9f9", textAlign: "center" }}>기 관 명</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px", width: 160 }}>
+                <input defaultValue="(주)테크솔루션" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, background: "#FFFDE7" }} />
+              </td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", width: 110, background: "#f9f9f9", textAlign: "center" }}>법인등록번호<br/>(사업자등록번호)</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input defaultValue="123-45-67890" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, background: "#FFFDE7" }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>소 재 지</td>
+              <td colSpan="3" style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input defaultValue="서울시 강남구 테헤란로 123" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, background: "#FFFDE7" }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>대 표 자</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input defaultValue="홍길동" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, background: "#FFFDE7" }} />
+              </td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>담 당 부 서</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input defaultValue="인사팀" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, background: "#FFFDE7" }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>전화번호<br/>(FAX)</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input defaultValue="02-1234-5678" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, background: "#FFFDE7" }} />
+              </td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>관리책임자<br/>(E-mail)</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input defaultValue="admin@techsolution.co.kr" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, background: "#FFFDE7" }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>직업소개업<br/>신고(등록) 여부</td>
+              <td colSpan="3" style={{ border: "1px solid #666", padding: "6px 10px" }}>
+                <label style={{ marginRight: 20 }}><input type="checkbox" defaultChecked /> 무료직업소개사업</label>
+                <label><input type="checkbox" /> 유료직업소개사업</label>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>기 관 유 형</td>
+              <td colSpan="3" style={{ border: "1px solid #666", padding: "6px 10px" }}>
+                <label style={{ marginRight: 20 }}><input type="checkbox" defaultChecked /> 비영리</label>
+                <label><input type="checkbox" /> 영리</label>
+              </td>
+            </tr>
+            {/* 보조기관 */}
+            <tr>
+              <td rowSpan="5" style={{ border: "1px solid #666", padding: "6px 8px", textAlign: "center", background: "#f5f5f5", fontWeight: 600, lineHeight: 2, fontSize: 10 }}>
+                기<br/>관<br/>현<br/>황<br/>(보조기관)<br/><span style={{ fontSize: 9, color: "#888", fontWeight: 400 }}>*컨소시엄만</span>
+              </td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>기 관 명</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input placeholder="컨소시엄의 경우만" style={{ width: "100%", border: "none", outline: "none", fontSize: 11, color: "#999" }} />
+              </td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>법인등기번호</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>소 재 지</td>
+              <td colSpan="3" style={{ border: "1px solid #666", padding: "4px 8px" }}>
+                <input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>대 표 자</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}><input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} /></td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>담 당 부 서</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}><input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} /></td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>전화번호<br/>(FAX)</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}><input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} /></td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>관리책임자<br/>(E-mail)</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}><input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} /></td>
+            </tr>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>컨소시엄 사업내용</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}><input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} /></td>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", textAlign: "center" }}>보조사업비율<br/>(위탁비 기준)</td>
+              <td style={{ border: "1px solid #666", padding: "4px 8px" }}><input placeholder="-" style={{ width: "100%", border: "none", outline: "none", fontSize: 11 }} /></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style={{ textAlign: "center", margin: "20px 0 10px", fontSize: 13, fontWeight: 700 }}>
+          2026년 『청년일자리도약장려금 사업』 운영기관 지정 신청서를 제출합니다.
+        </div>
+        <div style={{ textAlign: "right", margin: "10px 0 20px", fontSize: 11 }}>
+          <input defaultValue="2026" style={{ width: 40, border: "none", borderBottom: "1px solid #333", textAlign: "center", fontSize: 11 }} /> 년
+          &nbsp;<input defaultValue="03" style={{ width: 24, border: "none", borderBottom: "1px solid #333", textAlign: "center", fontSize: 11 }} /> 월
+          &nbsp;<input defaultValue="12" style={{ width: 24, border: "none", borderBottom: "1px solid #333", textAlign: "center", fontSize: 11 }} /> 일
+          <div style={{ marginTop: 8 }}>
+            신청인 &nbsp;&nbsp;
+            <input defaultValue="(주)테크솔루션 홍길동" style={{ width: 140, border: "none", borderBottom: "1px solid #333", fontSize: 11, textAlign: "center" }} />
+            &nbsp; (서명 또는 인)
+          </div>
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>○○지방고용노동(지)청장 &nbsp; 귀하</div>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12, fontSize: 11 }}>
+          <tbody>
+            <tr>
+              <td style={{ border: "1px solid #666", padding: "6px 10px", background: "#f9f9f9", width: 80, fontWeight: 600 }}>첨부서류<br/>(10부)</td>
+              <td style={{ border: "1px solid #666", padding: "8px 10px" }}>
+                1. 신청기관 일반현황(법인등기부등본, 사업자등록증 포함)<br/>
+                2. 사업계획서<br/>
+                3. 사업신청 자격이 있음을 입증할 수 있는 서류(직업소개사업 등록증)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div style={{ textAlign: "center", marginTop: 14, color: "#666", fontSize: 11 }}>— 159 —</div>
+        <div style={{ marginTop: 14, background: "#FFFDE7", border: "1px solid #F9A825", borderRadius: 6, padding: "8px 12px", fontSize: 11, color: "#7A6000" }}>
+          🤖 <strong>AI 자동 작성 완료</strong> — 노란색 배경 필드는 기업/직원 데이터에서 자동 입력되었습니다. 수정 후 저장하세요.
+        </div>
+      </div>
+    );
+
+    const ApplicationPage = ({ appData }) => {
+      const [selectedDoc, setSelectedDoc] = useState(null);
+      const [saved, setSaved] = useState(false);
+      const [submitAlert, setSubmitAlert] = useState(null);
+
+      const handleSubmit = () => {
+        const contractMissing = DOCS_LIST["위탁운영기관"].some(d => d.status === "pending");
+        setSubmitAlert(contractMissing ? "contract" : "issues");
+      };
+
+      return (
+        <div style={{ padding: 28, maxWidth: 1100 }}>
+          <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 12 }}>
+            <div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: C.gray800, margin: 0 }}>신청서 작성</h2>
+              <p style={{ color: C.gray400, fontSize: 13, margin: "4px 0 0" }}>
+                {appData ? `${appData.company} · ${appData.grant} · ${appData.emp}` : "A기업 · 청년일자리도약장려금 · 이서연"}
+              </p>
+            </div>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+              {saved && <Badge color={C.mintLight} textColor={C.teal}>✅ 임시저장됨</Badge>}
+              <Btn variant="outline" size="sm" onClick={() => setSaved(true)}>💾 임시저장</Btn>
+              <Btn size="sm" onClick={handleSubmit}>🚀 제출</Btn>
+            </div>
+          </div>
+
+          {submitAlert && (
+            <div style={{ background: submitAlert === "contract" ? C.redLight : C.orangeLight, borderRadius: 10, padding: "12px 16px", marginBottom: 14, border: `1px solid ${submitAlert === "contract" ? C.red : C.orange}55`, display: "flex", gap: 12 }}>
+              <span style={{ fontSize: 22 }}>{submitAlert === "contract" ? "🚨" : "⚠️"}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, color: submitAlert === "contract" ? C.red : C.orange, marginBottom: 4 }}>
+                  {submitAlert === "contract" ? "위탁운영기관 협약 미완료" : "제출 전 확인 필요"}
+                </div>
+                {submitAlert === "contract" ? (
+                  <div style={{ fontSize: 13, color: C.gray800 }}>신규 채용 3개월(2026.6.1.) 이전까지 <strong>위탁운영 협약서를 제출</strong>하세요!</div>
+                ) : (
+                  <div style={{ fontSize: 12, color: C.gray800 }}>
+                    <span style={{ color: C.red, fontWeight: 600 }}>기업 제출 서류</span> — 사업기획서 보완 필요! · 표준산업분류코드 확인필요<br />
+                    <span style={{ color: C.gray600 }}>청년 제출 서류</span> — 근로계약서 진행 중
+                  </div>
+                )}
+              </div>
+              <button onClick={() => setSubmitAlert(null)} style={{ background: "transparent", border: "none", cursor: "pointer", color: C.gray400, fontSize: 18 }}>×</button>
+            </div>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, alignItems: "start" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ background: C.mintLight, borderRadius: 7, padding: "6px 12px", fontSize: 12, color: C.teal, fontWeight: 600 }}>
+                  🤖 AI가 기업·직원 데이터 기반으로 자동 작성 완료 — 수정 후 제출하세요
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <Btn size="sm" variant="ghost">🖨️ 인쇄</Btn>
+                  <Btn size="sm" variant="ghost">⬇️ PDF</Btn>
+                </div>
+              </div>
+              <FormViewer formData={appData} />
+            </div>
+
+            {/* 제출서류 체크리스트 */}
+            <div style={{ position: "sticky", top: 20 }}>
+              <Card style={{ padding: 0, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.gray100}`, fontWeight: 700, fontSize: 13, color: C.gray800 }}>
+                  📋 제출서류 체크리스트
+                </div>
+                {Object.entries(DOCS_LIST).map(([cat, docs]) => (
+                  <div key={cat}>
+                    <div style={{ padding: "8px 14px 4px", fontSize: 11, fontWeight: 700, color: C.gray400, background: C.gray50, borderBottom: `1px solid ${C.gray100}` }}>
+                      {cat === "위탁운영기관" ? "📌 위탁운영기관 협약" : cat === "기업" ? "🏢 기업 제출서류" : "👤 직원 제출서류"}
+                    </div>
+                    {docs.map((doc, i) => {
+                      const key = `${cat}-${i}`;
+                      const s = ST[doc.status];
+                      return (
+                        <div key={i} onClick={() => setSelectedDoc(selectedDoc === key ? null : key)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
+                            cursor: "pointer", background: selectedDoc === key ? C.mintLight : "transparent",
+                            borderLeft: selectedDoc === key ? `3px solid ${C.mint}` : "3px solid transparent",
+                            borderBottom: `1px solid ${C.gray100}`
+                          }}>
+                          <span style={{ fontSize: 13 }}>{s.icon}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, color: C.gray800 }}>{doc.name}</div>
+                            {doc.warn && <div style={{ fontSize: 10, color: C.orange }}>⚠️ {doc.warn}</div>}
+                          </div>
+                          <Badge color={s.color + "22"} textColor={s.color} style={{ fontSize: 10 }}>{s.label}</Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+                {selectedDoc && (
+                  <div style={{ padding: "12px 14px", background: C.blueLight, borderTop: `1px solid ${C.gray200}` }}>
+                    <div style={{ fontSize: 11, color: C.blue, fontWeight: 700, marginBottom: 8 }}>📄 서류 미리보기</div>
+                    <div style={{ background: "#fff", borderRadius: 6, height: 100, display: "flex", alignItems: "center", justifyContent: "center", color: C.gray400, fontSize: 12, border: `1px solid ${C.gray200}`, textAlign: "center", padding: 8 }}>
+                      {selectedDoc.startsWith("위탁운영기관-0") ? "⚠️ 협약 미체결 상태" : "서류 미리보기 영역"}
+                    </div>
+                    <Btn style={{ width: "100%", marginTop: 8 }} size="sm">서류 편집 / 업로드</Btn>
+                  </div>
+                )}
+                <div style={{ padding: "10px 14px", background: C.gray50, borderTop: `1px solid ${C.gray200}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.gray400, marginBottom: 4 }}>
+                    <span>전체 진행률</span><span>3 / 7 완료</span>
+                  </div>
+                  <div style={{ height: 6, background: C.gray200, borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ width: "43%", height: "100%", background: C.mint, borderRadius: 3 }} />
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // ══════════════════════════════════════════════════════════════════
+    // APP ROOT
+    // ══════════════════════════════════════════════════════════════════
+    function App() {
+      const [page, setPage] = useState("home");
+      const [appData, setAppData] = useState(null);
+
+      return (
+        <div style={{ display: "flex", minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans KR', sans-serif" }}>
+          <Sidebar page={page} setPage={setPage} />
+          <div style={{ flex: 1, overflowY: "auto", maxHeight: "100vh" }}>
+            {page === "home" && <HomePage setPage={setPage} />}
+            {page === "company" && <CompanyPage />}
+            {page === "workflow" && <WorkflowPage setPage={setPage} setAppData={setAppData} />}
+            {page === "application" && <ApplicationPage appData={appData} />}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>

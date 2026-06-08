@@ -1,0 +1,158 @@
+{
+  "policy_name": "정규직 전환 지원",
+  "policy_category": "고용지원금",
+  "support_items": [
+    {
+      "support_type": "인건비 지원",
+      "target_conditions": [
+        "비정규직 근로자를 정규직으로 전환한 30인 미만 기업"
+      ],
+      "conditions": [
+        {
+          "type": "employment_type_before",
+          "value": "비정규직",
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "employment_type_after",
+          "value": "정규직",
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "company_size",
+          "value": null,
+          "min": null,
+          "max": 30
+        },
+        {
+          "type": "continuous_service_months",
+          "value": null,
+          "min": 6,
+          "max": null
+        },
+        {
+          "type": "employment_insurance",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "wage_after_conversion",
+          "value": "최저임금액 이상",
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "remaining_retirement_period_years",
+          "value": null,
+          "min": 2,
+          "max": null
+        },
+        {
+          "type": "employment_maintenance_months",
+          "value": null,
+          "min": 1,
+          "max": null
+        },
+        {
+          "type": "application_within_months_after_conversion",
+          "value": null,
+          "min": null,
+          "max": 12
+        }
+      ],
+      "support": {
+        "monthly_amount": 600000,
+        "yearly_max_amount": 7200000,
+        "max_duration_months": 12
+      },
+      "required_systems": [],
+      "required_documents": [
+        "참여신청서"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "전환 후 월평균 임금 증가분이 20만원 미만인 경우 월 40만원 지원"
+      ],
+      "evidence_snippets": [
+        "비정규직 근로자*를 정규직으로 전환한 30인 미만 기업",
+        "＊︎ 6개월 이상 근속한 기간제 ·파견 ·사내하도급 근로자 또는 6개월 이상 해당 사업(장)에서 상시적으로 노무를 제공한 노무젝공자로서 고용보험에 가입되어 있어야 함",
+        "전환 후 임금이  최저임금액 이상이어야 하며, 전환 후 정년까지의 기간이 2년 이상 남아있어야 함"
+      ]
+    },
+    {
+      "support_type": "장려금",
+      "target_conditions": [
+        "비정규직 근로자를 정규직으로 전환한 30인 미만 기업"
+      ],
+      "conditions": [
+        {
+          "type": "monthly_wage_increase",
+          "value": null,
+          "min": 200000,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 600000,
+        "yearly_max_amount": 7200000,
+        "max_duration_months": 12
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "전환 근로자 1인당 월 60만원 또는 월 40만원",
+        "전환 후 월평균 임금 증가분이 20만원 이상인 경우 월 60만원, 그 외의 경우 월 40만원"
+      ]
+    },
+    {
+      "support_type": "장려금",
+      "target_conditions": [
+        "비정규직 근로자를 정규직으로 전환한 30인 미만 기업"
+      ],
+      "conditions": [
+        {
+          "type": "monthly_wage_increase",
+          "value": null,
+          "min": null,
+          "max": 199999
+        }
+      ],
+      "support": {
+        "monthly_amount": 400000,
+        "yearly_max_amount": 4800000,
+        "max_duration_months": 12
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "전환 근로자 1인당 월 60만원 또는 월 40만원",
+        "전환 후 월평균 임금 증가분이 20만원 이상인 경우 월 60만원, 그 외의 경우 월 40만원"
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": 0.3,
+    "max_people_limit": 3
+  },
+  "application_process": [
+    "사업주 → 지방고용노동관서 또는 고용24 홈페이지(www.work24.go.kr)"
+  ],
+  "risk_conditions": [
+    "「부패방지 및 국민권익위원회의 설치와 운영에 관한 법률」 제2조제1호 가목에서 다목까지의 기관, 공공기관 및 지방공기업",
+    "일반·무도유흥주점업, 기타 주점업, 기타 사행시설 관리·운영법, 무도장 운영업 등 「중소기업인력지원특별법시행령」 제2조 해당 사업주",
+    "「근로기준법」 제43조의2에 따라 임금 등을 체불하여 명단공개 사업주",
+    "「산업안전보건법」 제10조에 따라 중대 산업재해 발생 등으로 명단이 공표중인 사업주",
+    "해당 사업(장) 전체 피보험자수 5인 미만 사업주",
+    "고용보험에 가입되어 있지 않은 근로자",
+    "사업주(법인의 경우 법인의 대표이사)의 배우자, 직계 존·비속",
+    "외국인(F-2 거주, F-5 영주, F-6 결혼이민 비자 외국인 제외)",
+    "「고용산재보험료징수법」에 따라 사업주가 신고한 월평균 보수가 124만원 민만인 근로자"
+  ]
+}

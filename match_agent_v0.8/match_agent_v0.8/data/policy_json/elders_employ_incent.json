@@ -1,0 +1,110 @@
+{
+  "policy_name": "고령자 고용지원금",
+  "policy_category": "고용지원금",
+  "support_items": [
+    {
+      "support_type": "고령자 고용 증가 지원금",
+      "target_conditions": [
+        {
+          "type": "business_operation_period_years",
+          "min": 1,
+          "max": null
+        },
+        {
+          "type": "company_type",
+          "value": [
+            "우선지원대상기업",
+            "중견기업"
+          ],
+          "min": null,
+          "max": null
+        }
+      ],
+      "conditions": [
+        {
+          "type": "employee_age",
+          "min": 60,
+          "max": null,
+          "value": null
+        },
+        {
+          "type": "employment_insurance_period_years",
+          "min": 1,
+          "max": null,
+          "value": null
+        },
+        {
+          "type": "elderly_employee_increase",
+          "value": true,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 100000,
+        "yearly_max_amount": null,
+        "max_duration_months": 24
+      },
+      "required_systems": [],
+      "required_documents": [
+        "고령자 고용지원금 신청서",
+        "신청 분기 근로자 명부(피보험기간 1년 초과한 60세 이상 근로자)",
+        "임금대장"
+      ],
+      "duplicate_allowed": [
+        {
+          "type": "other_supports_same_employee",
+          "value": false
+        }
+      ],
+      "important_conditions": [
+        {
+          "type": "excluded_employer_types",
+          "value": [
+            "행정기관",
+            "공공기관",
+            "지방공기업",
+            "주점업",
+            "사행시설",
+            "무도장 운영업",
+            "임금체불 명단공개 사업주",
+            "보험료 체납 사업주",
+            "중대산업재해 명단 공표 사업주"
+          ]
+        },
+        {
+          "type": "excluded_employees",
+          "value": [
+            "사업주의 배우자",
+            "직계 존·비속",
+            "외국인(거주, 영주, 결혼이민자는 지원)",
+            "최저임금 미만자"
+          ]
+        }
+      ],
+      "evidence_snippets": [
+        "근무기간 1년을 초과한 60세 이상 근로자의 고용이 증가한 경우 지원하는 지원금입니다.",
+        "증가 근로자 1명당 분기 30만원을 최대 2년간 지급합니다.",
+        "지원한도는 신청 분기 매월 말 피보험자수 평균의 30%와 30명 중 더 작은 수(피보험자수가 10명 이하인 사업장은 최대 3명까지 지원)입니다."
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": 0.3,
+    "max_people_limit": 30
+  },
+  "application_process": [
+    "신청서 작성․제출(사업주)",
+    "신청기간(분기 단위로 신청)",
+    "고용24(work24.go.kr) → 기업 로그인 → 기업지원금 → 신규채용 → 고령자고용 지원금",
+    "우편·방문) 관할 고용센터",
+    "고령자 고용지원금 신청서, 신청 분기 근로자 명부(피보험기간 1년 초과한 60세 이상 근로자) 및 임금대장 제출",
+    "지원금 검토결과 통지(고용센터)",
+    "지원금 신청 후 14일 이내에 지원금 지급 결정 여부 통보"
+  ],
+  "risk_conditions": [
+    "거짓이나 그 밖의 부정한 방법으로 지원금을 받은 사람은 3년 이하의 징역 또는 3천만원 이하의 벌금에 처해질 수 있습니다.",
+    "최초 신청은 반드시 공고문에 명시된 기간 내에 신청하여야 합니다.",
+    "다른 지원금과의 중복지원을 받기 위해 고령자 명부상의 지원대상 근로자를 임의로 제외하고 신청할 수 없습니다."
+  ]
+}

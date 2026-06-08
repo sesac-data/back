@@ -1,0 +1,535 @@
+{
+  "schema_version": 1,
+  "status_values": [
+    "implemented_existing",
+    "not_started",
+    "in_progress",
+    "blocked",
+    "passing"
+  ],
+  "verification_policy": {
+    "script": "scripts/verify.sh",
+    "passing_rule": "Set status to passing only after scripts/verify.sh passes for the relevant feature scope.",
+    "do_not_weaken_existing_tests": true
+  },
+  "features": [
+    {
+      "id": "existing-streamlit-upload-confirm-results",
+      "name": "Existing Streamlit upload, confirm, recommendation flow",
+      "area": "existing_app",
+      "status": "implemented_existing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/app.py",
+        "match_agent_v0.8/match_agent_v0.8/pages/upload_page.py",
+        "match_agent_v0.8/match_agent_v0.8/pages/confirm_page.py",
+        "match_agent_v0.8/match_agent_v0.8/pages/results_page.py"
+      ],
+      "depends_on": [],
+      "notes": "Existing single-flow app; not yet the separated v2 MVP flow."
+    },
+    {
+      "id": "existing-policy-json-fixtures",
+      "name": "Existing structured policy JSON fixtures",
+      "area": "policy",
+      "status": "implemented_existing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/data/policy_json"
+      ],
+      "depends_on": [],
+      "notes": "Fixtures exist; approval lifecycle is not yet modeled."
+    },
+    {
+      "id": "existing-policy-extraction",
+      "name": "LLM-assisted policy extraction candidate flow",
+      "area": "policy",
+      "status": "implemented_existing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extractor.py"
+      ],
+      "depends_on": [
+        "existing-policy-json-fixtures"
+      ],
+      "notes": "Must remain limited to extraction and candidate condition structuring."
+    },
+    {
+      "id": "existing-condition-evaluator",
+      "name": "Existing code-based condition evaluator",
+      "area": "rule_engine",
+      "status": "implemented_existing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/condition_evaluator.py",
+        "match_agent_v0.8/match_agent_v0.8/services/condition_registry.py"
+      ],
+      "depends_on": [
+        "existing-policy-json-fixtures"
+      ],
+      "notes": "Partial condition support; unknown approved condition types must be treated as risk."
+    },
+    {
+      "id": "existing-amount-calculation",
+      "name": "Existing code-based support amount calculation",
+      "area": "rule_engine",
+      "status": "implemented_existing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/services/amount_normalizer.py"
+      ],
+      "depends_on": [
+        "existing-condition-evaluator"
+      ],
+      "notes": "Calculates from structured amount fields; should not infer missing amounts."
+    },
+    {
+      "id": "existing-recommendation-selection",
+      "name": "Existing recommendation selection and duplicate guard baseline",
+      "area": "recommendation",
+      "status": "implemented_existing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/recommendation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/services/policy_combination_rules.py"
+      ],
+      "depends_on": [
+        "existing-amount-calculation"
+      ],
+      "notes": "Baseline amount-sorted selection with conflict rules; not full combination optimization yet."
+    },
+    {
+      "id": "existing-react-v2-prototype",
+      "name": "Existing React v2 role-separated prototype",
+      "area": "frontend",
+      "status": "implemented_existing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/App.jsx",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/styles.css"
+      ],
+      "depends_on": [],
+      "notes": "Static UI prototype with company and firm role state; not connected to backend or persistent data."
+    },
+    {
+      "id": "harness-documentation",
+      "name": "Harness documentation and verification baseline",
+      "area": "harness",
+      "status": "passing",
+      "implemented_in": [
+        "AGENTS.md",
+        "docs/DEVELOPMENT_SETUP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/RULE_ENGINE.md",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md",
+        "scripts/verify.sh",
+        "scripts/verify.ps1",
+        "tasks/feature_list.json",
+        "tasks/progress.md",
+        ".env.example",
+        "requirements-dev.txt"
+      ],
+      "depends_on": [],
+      "notes": "Limited verification passes on PowerShell and Git Bash. Full verification is defined separately and requires requirements-dev.txt plus PostgreSQL availability."
+    },
+    {
+      "id": "user-type-account-context",
+      "name": "User type and organization context",
+      "area": "accounts",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "harness-documentation"
+      ],
+      "notes": "Needed before onboarding, hub, permissions, or recommendation scoping."
+    },
+    {
+      "id": "general-company-domain-model",
+      "name": "General company domain model",
+      "area": "domain",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "user-type-account-context"
+      ],
+      "notes": "company -> employee -> leave_event ownership."
+    },
+    {
+      "id": "labor-partner-domain-model",
+      "name": "Labor partner and client company domain model",
+      "area": "domain",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "user-type-account-context"
+      ],
+      "notes": "labor_partner -> client_company -> employee -> leave_event ownership."
+    },
+    {
+      "id": "policy-approval-gate",
+      "name": "Approved policy gate",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/minimum_recommendation_flow.py",
+        "match_agent_v0.8/match_agent_v0.8/data/policy_json/approved_minimum_recommendation_fixture.json",
+        "match_agent_v0.8/match_agent_v0.8/test_minimum_recommendation_flow.py"
+      ],
+      "depends_on": [
+        "existing-policy-extraction",
+        "harness-documentation"
+      ],
+      "notes": "Minimum approved-policy recommendation flow passes verification. Only approved policies enter calculation; unapproved policies return needs_review."
+    },
+    {
+      "id": "rule-engine-operator-validation",
+      "name": "Rule Engine operator validation",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/condition_evaluator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_condition_operator_evaluator.py"
+      ],
+      "depends_on": [
+        "existing-condition-evaluator",
+        "policy-approval-gate"
+      ],
+      "notes": "Code-based condition operator validation supports eq, neq, gt, gte, lt, lte, in, and not_in with structured pass/fail reasons and evidence snippets."
+    },
+    {
+      "id": "monthly-fixed-amount-calculation",
+      "name": "Monthly fixed amount calculation",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_monthly_fixed_calculation.py"
+      ],
+      "depends_on": [
+        "existing-amount-calculation",
+        "policy-approval-gate",
+        "rule-engine-operator-validation"
+      ],
+      "notes": "Approved-policy monthly_fixed calculation validates operator conditions, applies requested months against policy max months, returns structured calculation steps, and preserves evidence snippets."
+    },
+    {
+      "id": "period-tiered-amount-calculation",
+      "name": "Period tiered amount calculation",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_period_tiered_calculation.py"
+      ],
+      "depends_on": [
+        "existing-amount-calculation",
+        "policy-approval-gate",
+        "rule-engine-operator-validation",
+        "monthly-fixed-amount-calculation"
+      ],
+      "notes": "Approved-policy period_tiered calculation validates operator conditions, applies only covered month tiers, rejects invalid tier ranges, and preserves tier evidence snippets."
+    },
+    {
+      "id": "conditional-bonus-amount-calculation",
+      "name": "Conditional bonus amount calculation",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_conditional_bonus_calculation.py"
+      ],
+      "depends_on": [
+        "existing-amount-calculation",
+        "policy-approval-gate",
+        "rule-engine-operator-validation",
+        "monthly-fixed-amount-calculation",
+        "period-tiered-amount-calculation"
+      ],
+      "notes": "Approved-policy conditional_bonus calculation reuses monthly_fixed or period_tiered base calculators, applies monthly_fixed bonuses only when bonus conditions pass, and separates base, bonus, skipped bonus, and evidence outputs."
+    },
+    {
+      "id": "standardized-policy-calculation-result",
+      "name": "Standardized policy calculation result",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_standardized_calculation_result.py"
+      ],
+      "depends_on": [
+        "monthly-fixed-amount-calculation",
+        "period-tiered-amount-calculation",
+        "conditional-bonus-amount-calculation"
+      ],
+      "notes": "Normalizes monthly_fixed, period_tiered, and conditional_bonus outputs into a shared policy calculation result shape without changing amount formulas."
+    },
+    {
+      "id": "combination-rules-schema-validation",
+      "name": "Combination rules schema validation",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/combination_rule_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_combination_rule_validator.py",
+        "docs/POLICY_SCHEMA.md",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "standardized-policy-calculation-result"
+      ],
+      "notes": "Defines and validates policy combination_rules schema for mutually_exclusive, requires, and allowed_with without implementing runtime conflict detection or combination selection."
+    },
+    {
+      "id": "mutually-exclusive-conflict-detection",
+      "name": "Mutually exclusive conflict detection",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/mutual_exclusion_detector.py",
+        "match_agent_v0.8/match_agent_v0.8/test_mutual_exclusion_detector.py",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "combination-rules-schema-validation"
+      ],
+      "notes": "Detects mutually_exclusive conflicts among approved candidate policies, reuses combination rule schema validation, deduplicates bidirectional declarations, and separates schema errors from conflicts."
+    },
+    {
+      "id": "requires-policy-violation-detection",
+      "name": "Requires policy violation detection",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/requirement_detector.py",
+        "match_agent_v0.8/match_agent_v0.8/test_requirement_detector.py",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "combination-rules-schema-validation"
+      ],
+      "notes": "Detects missing required approved policies for requires rules, treats non-approved required targets as missing, preserves evidence snippets, and does not auto-add policies or generate combinations."
+    },
+    {
+      "id": "valid-policy-combination-generation",
+      "name": "Valid policy combination generation",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/policy_combination_generator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_combination_generator.py",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "mutually-exclusive-conflict-detection",
+        "requires-policy-violation-detection"
+      ],
+      "notes": "Generates all non-empty approved-policy subsets up to a 12-candidate safety limit, classifies combinations using existing mutually_exclusive and requires detectors, preserves rejection evidence, and does not sum amounts or choose an optimal combination."
+    },
+    {
+      "id": "valid-combination-amount-summarization",
+      "name": "Valid combination amount summarization",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/combination_amount_summarizer.py",
+        "match_agent_v0.8/match_agent_v0.8/test_combination_amount_summarizer.py",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "valid-policy-combination-generation",
+        "standardized-policy-calculation-result"
+      ],
+      "notes": "Sums already standardized calculated policy results for valid combinations, separates base, bonus, and total subsidy amounts, preserves calculation steps and evidence, and does not recalculate policy amounts or select an optimal combination."
+    },
+    {
+      "id": "employer-net-cost-calculation",
+      "name": "Employer net cost calculation",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/employer_net_cost_calculator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_employer_net_cost_calculator.py",
+        "data/acceptance_scenarios/employer_net_cost.json",
+        "scripts/run_recommendation_acceptance.py",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "valid-combination-amount-summarization"
+      ],
+      "notes": "Calculates total_employer_cost and net_employer_cost from explicit employer_cost_items only, applies cost target policy IDs as AND conditions, preserves summarized combination data, and does not infer costs, rank, or select an optimal combination. Acceptance verification now includes the employer_net_cost scenario and compares subsidy totals, employer costs, net costs, and applied cost item IDs."
+    },
+    {
+      "id": "general-company-recommendation-demo-screen",
+      "name": "General company recommendation demo screen",
+      "area": "frontend",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/App.jsx",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/styles.css",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/services/recommendationService.js",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/services/mockRecommendationAdapter.js",
+        "match_agent_v0.8/match_agent_v0.8/test_frontend_recommendation_demo.py",
+        "docs/ARCHITECTURE.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "valid-combination-amount-summarization",
+        "existing-react-v2-prototype"
+      ],
+      "notes": "Adds a general-company-only recommendation comparison demo screen using a replaceable recommendation service adapter and mock data aligned with current combination amount summaries. It does not implement API integration, optimizer/ranking, net-cost display, labor-partner screens, or frontend calculation logic."
+    },
+    {
+      "id": "recommendation-smoke-runner",
+      "name": "Recommendation calculation smoke runner",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "scripts/run_recommendation_smoke.py",
+        "data/smoke_scenarios/base.json",
+        "data/smoke_scenarios/bonus.json",
+        "data/smoke_scenarios/capped.json",
+        "data/smoke_scenarios/conflict.json",
+        "data/smoke_scenarios/requires.json",
+        "output/smoke/base.json",
+        "output/smoke/bonus.json",
+        "output/smoke/capped.json",
+        "output/smoke/conflict.json",
+        "output/smoke/requires.json"
+      ],
+      "depends_on": [
+        "valid-combination-amount-summarization",
+        "valid-policy-combination-generation",
+        "standardized-policy-calculation-result"
+      ],
+      "notes": "Adds one manual smoke runner that loads test-only fixtures, calls existing approved-policy calculation, condition evaluation, monthly_fixed, period_tiered, conditional_bonus, standardized policy results, valid combination generation, mutually_exclusive/requires rejection checks, and combination amount summarization. It does not change UI, adapters, APIs, DB structure, calculation formulas, or combination logic."
+    },
+    {
+      "id": "demo-acceptance-verification-harness",
+      "name": "Demo acceptance verification harness",
+      "area": "harness",
+      "status": "passing",
+      "implemented_in": [
+        "scripts/run_recommendation_acceptance.py",
+        "scripts/write_verification_report.py",
+        "scripts/verify.ps1",
+        "scripts/verify.sh",
+        "data/acceptance_scenarios/base.json",
+        "data/acceptance_scenarios/bonus.json",
+        "data/acceptance_scenarios/capped.json",
+        "data/acceptance_scenarios/conflict.json",
+        "data/acceptance_scenarios/requires.json",
+        "match_agent_v0.8/match_agent_v0.8/frontend/playwright.config.js",
+        "match_agent_v0.8/match_agent_v0.8/frontend/e2e/recommendation-demo.spec.js",
+        "match_agent_v0.8/match_agent_v0.8/frontend/package.json",
+        "match_agent_v0.8/match_agent_v0.8/frontend/package-lock.json",
+        "docs/DEVELOPMENT_SETUP.md",
+        "docs/ARCHITECTURE.md",
+        "docs/TEST_SCENARIOS.md",
+        "output/verification/backend-report.json",
+        "output/verification/frontend-report.json",
+        "output/verification/frontend-screenshot.png",
+        "output/verification/latest-report.md"
+      ],
+      "depends_on": [
+        "recommendation-smoke-runner",
+        "general-company-recommendation-demo-screen"
+      ],
+      "notes": "Adds automatic backend acceptance checks and frontend Playwright E2E verification with a combined Markdown report. It reuses existing backend service functions and existing frontend demo data, and does not change calculation formulas, policy combination logic, UI structure, API boundaries, mock adapter display data, or database schema."
+    },
+    {
+      "id": "condition-type-coverage-audit",
+      "name": "Condition type coverage audit",
+      "area": "rule_engine",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "existing-condition-evaluator",
+        "policy-approval-gate",
+        "rule-engine-operator-validation"
+      ],
+      "notes": "Compare policy JSON condition types with code-supported registry and tests."
+    },
+    {
+      "id": "onboarding-minimum-save-flow",
+      "name": "Minimum onboarding save flow",
+      "area": "product_flow",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "general-company-domain-model",
+        "labor-partner-domain-model"
+      ],
+      "notes": "First product feature: save minimal general company or labor partner onboarding data and enter the correct hub."
+    },
+    {
+      "id": "employee-leave-management",
+      "name": "Employee and leave event management",
+      "area": "product_flow",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "onboarding-minimum-save-flow"
+      ],
+      "notes": "Required input for deterministic policy evaluation."
+    },
+    {
+      "id": "rule-engine-domain-adapter",
+      "name": "Domain to rule-engine input adapter",
+      "area": "rule_engine",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "employee-leave-management",
+        "condition-type-coverage-audit"
+      ],
+      "notes": "Transforms v2 company/client/employee/leave data into rule-engine inputs."
+    },
+    {
+      "id": "recommendation-result-storage",
+      "name": "Recommendation result storage and audit snapshot",
+      "area": "recommendation",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "rule-engine-domain-adapter",
+        "existing-recommendation-selection"
+      ],
+      "notes": "Store selected, skipped, and needs_review policies with input snapshots."
+    },
+    {
+      "id": "documents-deadlines",
+      "name": "Documents and deadline management",
+      "area": "operations",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "recommendation-result-storage"
+      ],
+      "notes": "Manage required documents and application deadlines after recommendation."
+    },
+    {
+      "id": "replacement-hiring",
+      "name": "Replacement hiring management",
+      "area": "operations",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "documents-deadlines"
+      ],
+      "notes": "General-company expansion workflow."
+    },
+    {
+      "id": "newsletter-sending",
+      "name": "Newsletter sending workflow",
+      "area": "operations",
+      "status": "not_started",
+      "implemented_in": [],
+      "depends_on": [
+        "documents-deadlines"
+      ],
+      "notes": "Labor-partner expansion workflow."
+    }
+  ]
+}

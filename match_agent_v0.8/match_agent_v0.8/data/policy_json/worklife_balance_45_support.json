@@ -1,0 +1,130 @@
+{
+  "policy_name": "워라밸+4.5 프로젝트",
+  "policy_category": "사업주 지원",
+  "support_items": [
+    {
+      "support_type": "실근로시간 단축 도입 지원금",
+      "target_conditions": [
+        "20인 이상의 우선지원 대상기업",
+        "생명⋅안전 업종, 장시간 노동 사업장, 교대제 개편 추진 기업 등은 300인 이상 사업장까지 지원"
+      ],
+      "conditions": [
+        {
+          "type": "requires_labor_agreement",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "requires_attendance_system",
+          "value": true,
+          "min": null,
+          "max": null
+        },
+        {
+          "type": "working_hour_reduction",
+          "value": null,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": null,
+        "yearly_max_amount": null,
+        "max_duration_months": 12
+      },
+      "required_systems": [
+        "전자⋅기계적 방식 등 근태관리 시스템"
+      ],
+      "required_documents": [
+        "사업 참여 신청서",
+        "노사 합의서",
+        "근태 관리 방안"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "임금 감소 없는 실근로시간 단축"
+      ],
+      "evidence_snippets": [
+        "노사합의에 따라 임금감소 없이 주4.5일제 도입 등 실노동시간을 단축하여 운영하는 기업을 지원합니다.",
+        "① 임금 감소 없는 실근로시간 단축을 위한 세부 추진계획을 수립하기 위해 노사 합의를 거쳐야 합니다.",
+        "③ 사업주는 적용 대상 근로자의 근태사항을 전자⋅기계적 방식 등으로 관리하여야 합니다."
+      ]
+    },
+    {
+      "support_type": "실근로시간 단축 도입 지원금 - 부분도입/전면도입",
+      "target_conditions": [
+        "50인 이상 우선지원 대상기업",
+        "20인 이상 ~ 50인 미만 우선지원 대상기업",
+        "생명⋅안전 업종, 장시간 노동 사업장, 교대제 개편 추진 기업, 비수도권 기업"
+      ],
+      "conditions": [
+        {
+          "type": "working_hour_reduction",
+          "value": null,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": null,
+        "yearly_max_amount": null,
+        "max_duration_months": 12
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "전면도입은 주당 실근로시간을 2시간 이상, 부분도입은 2시간 미만 단축"
+      ],
+      "evidence_snippets": [
+        "⋇ 전면도입은 주당 실근로시간을 2시간 이상, 부분도입은 2시간 미만 단축하는 경우를 말합니다.",
+        "50인 이상 우선지원 대상기업 (부분도입) 1인당 월 20만원(1년) (전면도입) 1인당 월 40만원(1년)",
+        "20인 이상 ~ 50인 미만 (부분도입) 1인당 월 30만원(1년) (전면도입) 1인당 월 50만원(1년)"
+      ]
+    },
+    {
+      "support_type": "신규채용 추가 지원금",
+      "target_conditions": [
+        "실근로시간 단축 도입 후 직전 3개월 대비 직후 3개월 평균 노동자 수 증가 기업"
+      ],
+      "conditions": [
+        {
+          "type": "working_hour_reduction",
+          "value": null,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": null,
+        "yearly_max_amount": null,
+        "max_duration_months": 12
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "추가로 단축 도입 후, 직전 3개월 대비 직후 3개월 평균 노동자 수가 증가한 기업에 신규 채용 1인당 월 60~80만 원을 지원합니다.",
+        "신규 채용인원 1인당 월 60만원(1년)",
+        "신규 채용인원 1인당 월 80만원(1년)"
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": null,
+    "max_people_limit": 100
+  },
+  "application_process": [
+    "노사합의를 거쳐 실근로시간 단축 계획 및 근태 관리 방안 등을 수립합니다.",
+    "제출 필요 서류와 함께 사업 참여 신청서를 노사발전재단에 오프라인으로 제출하거나 온라인을 통해 제출하여 신청해야 합니다.",
+    "온라인: 고용24 홈페이지(www.work24.go.kr) → 로그인→ 기업 → 기업지원금 → 유연근무 → 근로시간 단축 → 워라밸일자리 장려금(워라밸+4.5 프로젝트)",
+    "오프라인: 사업장 소재지 관할 고용센터(기업지원부서)에 서류 접수",
+    "실근로시간 단축 도입⋅시행일이 속하는 달의 다음 달부터 12개월 이내에 첫 번째 주기의 장려금을 신청해야 합니다.",
+    "장려금은 또한, 실근로시간 단축 도입⋅시행일이 속하는 달의 다음 달부터 3개월마다 신청해야 합니다."
+  ],
+  "risk_conditions": [
+    "고용보험료나 산재보험료를 체납한 기업의 사업주는 지원금 신청 대상에서 제외"
+  ]
+}

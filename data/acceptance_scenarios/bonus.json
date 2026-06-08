@@ -1,0 +1,108 @@
+{
+  "scenario": "bonus",
+  "fixture_notice": "TEST FIXTURE ONLY. This is not real policy data and must not be used as source-backed policy content.",
+  "input": {
+    "rule_input": {
+      "company": {
+        "size": "small",
+        "has_replacement_worker": true
+      },
+      "employee": {
+        "leave_type": "parental_leave"
+      }
+    },
+    "requested_months": 5
+  },
+  "candidate_policies": [
+    {
+      "policy_id": "smoke-tiered-bonus",
+      "policy_key": "smoke-tiered-bonus",
+      "policy_name": "Smoke Period Tiered With Replacement Bonus Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: approved tiered base policy with conditional bonus."
+      ],
+      "support_items": [
+        {
+          "support_type": "period_tiered",
+          "conditions": [
+            {
+              "condition_id": "company-size-small",
+              "field": "company.size",
+              "operator": "eq",
+              "expected": "small",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: small companies are eligible."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "period_tiered",
+            "tiers": [
+              {
+                "start_month": 1,
+                "end_month": 3,
+                "monthly_amount": 1000000,
+                "evidence_snippets": [
+                  "TEST FIXTURE evidence: months 1 through 3 pay 1000000 per month."
+                ]
+              },
+              {
+                "start_month": 4,
+                "end_month": 12,
+                "monthly_amount": 300000,
+                "evidence_snippets": [
+                  "TEST FIXTURE evidence: months 4 through 12 pay 300000 per month."
+                ]
+              }
+            ],
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: tiered support is defined by month."
+            ]
+          },
+          "conditional_bonuses": [
+            {
+              "benefit_id": "replacement-worker-bonus",
+              "bonus_type": "replacement_worker",
+              "calculation_type": "monthly_fixed",
+              "conditions": [
+                {
+                  "condition_id": "has-replacement-worker",
+                  "field": "company.has_replacement_worker",
+                  "operator": "eq",
+                  "expected": true,
+                  "evidence_snippets": [
+                    "TEST FIXTURE evidence: replacement worker condition is required for bonus."
+                  ]
+                }
+              ],
+              "monthly_amount": 50000,
+              "max_months": 3,
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: bonus pays 50000 per month when condition is met."
+              ]
+            }
+          ],
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: conditional bonus support item."
+          ]
+        }
+      ],
+      "combination_rules": []
+    }
+  ],
+  "expected": {
+    "valid_combination_count": 1,
+    "rejected_combination_count": 0,
+    "expected_policy_ids": [
+      [
+        "smoke-tiered-bonus"
+      ]
+    ],
+    "expected_rejected_policy_ids": [],
+    "total_base_amount": 3600000,
+    "total_bonus_amount": 150000,
+    "total_subsidy_amount": 3750000,
+    "expected_error_codes": []
+  }
+}

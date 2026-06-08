@@ -1,0 +1,137 @@
+{
+  "scenario": "conflict",
+  "fixture_notice": "TEST FIXTURE ONLY. This is not real policy data and must not be used as source-backed policy content.",
+  "input": {
+    "rule_input": {
+      "company": {
+        "size": "small",
+        "has_replacement_worker": false
+      },
+      "employee": {
+        "leave_type": "parental_leave"
+      }
+    },
+    "requested_months": 4
+  },
+  "candidate_policies": [
+    {
+      "policy_id": "smoke-conflict-a",
+      "policy_key": "smoke-conflict-a",
+      "policy_name": "Smoke Conflict Policy A Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: approved conflict policy A."
+      ],
+      "support_items": [
+        {
+          "support_type": "monthly_fixed",
+          "conditions": [
+            {
+              "condition_id": "company-size-small",
+              "field": "company.size",
+              "operator": "eq",
+              "expected": "small",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: small companies are eligible."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "monthly_fixed",
+            "monthly_amount": 100000,
+            "max_months": 6,
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: policy A pays 100000 per month."
+            ]
+          },
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: policy A support item."
+          ]
+        }
+      ],
+      "combination_rules": [
+        {
+          "rule_id": "SMOKE-CONFLICT-A-B",
+          "rule_type": "mutually_exclusive",
+          "target_policy_ids": [
+            "smoke-conflict-b"
+          ],
+          "reason": "TEST FIXTURE reason: A and B cannot be selected together.",
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: policy A and policy B are mutually exclusive."
+          ]
+        }
+      ]
+    },
+    {
+      "policy_id": "smoke-conflict-b",
+      "policy_key": "smoke-conflict-b",
+      "policy_name": "Smoke Conflict Policy B Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: approved conflict policy B."
+      ],
+      "support_items": [
+        {
+          "support_type": "monthly_fixed",
+          "conditions": [
+            {
+              "condition_id": "company-size-small",
+              "field": "company.size",
+              "operator": "eq",
+              "expected": "small",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: small companies are eligible."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "monthly_fixed",
+            "monthly_amount": 80000,
+            "max_months": 6,
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: policy B pays 80000 per month."
+            ]
+          },
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: policy B support item."
+          ]
+        }
+      ],
+      "combination_rules": []
+    }
+  ],
+  "expected": {
+    "valid_combination_count": 2,
+    "rejected_combination_count": 1,
+    "expected_policy_ids": [
+      [
+        "smoke-conflict-a"
+      ],
+      [
+        "smoke-conflict-b"
+      ]
+    ],
+    "expected_rejected_policy_ids": [
+      [
+        "smoke-conflict-a",
+        "smoke-conflict-b"
+      ]
+    ],
+    "total_base_amount": [
+      400000,
+      320000
+    ],
+    "total_bonus_amount": [
+      0,
+      0
+    ],
+    "total_subsidy_amount": [
+      400000,
+      320000
+    ],
+    "expected_error_codes": [
+      "mutually_exclusive"
+    ]
+  }
+}

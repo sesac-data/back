@@ -1,0 +1,44 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+match_agent_v0.8/match_agent_v0.8/match_agent/
+
+# Node / frontend
+node_modules/
+dist/
+test-results/
+playwright-report/
+
+# Local outputs and logs
+output/
+*.log
+server.out.log
+server.err.log
+
+# Local editor/app state
+.cursor/
+.vscode/
+
+# Archives and temporary files
+*.zip
+*.tmp
+*.bak
+
+# OS files
+Thumbs.db
+.DS_Store

@@ -1,0 +1,199 @@
+{
+  "policy_name": "육아휴직･육아기 근로시간 단축지원금",
+  "policy_category": "사업주 지원",
+  "support_items": [
+    {
+      "support_type": "육아휴직 지원금",
+      "target_conditions": [
+        "우선지원대상기업 사업주",
+        "육아휴직 또는 육아기 근로시간 단축을 30일 이상 부여한 사업주"
+      ],
+      "conditions": [
+        {
+          "type": "child_age",
+          "value": null,
+          "min": 0,
+          "max": 12
+        },
+        {
+          "type": "leave_duration_days",
+          "value": null,
+          "min": 30,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 1000000,
+        "yearly_max_amount": 5700000,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [
+        "출산육아기 고용안정장려금 지급신청서",
+        "육아휴직 등 실시를 증명하는 서류 사본",
+        "사업주의 가족관계등록부 또는 주민등록등본"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "육아휴직 특례 지원금은 육아휴직 대체인력인건비 지원을 포함하고 있으므로, 특례를 지원받은 경우에는 육아휴직 대체인력지원금 전체 기간에 대한 중복지원을 제한함"
+      ],
+      "evidence_snippets": [
+        "육아휴직 또는 육아기 근로시간 단축(이하 ‘육아휴직등’ 이라 함)을 30일(출산전후 휴가의 기간과 중복되는 기간은 제외) 이상 부여한 사업주",
+        "만 12개월 이내 (특례) 첫 3개월 100만원* 이후 육아휴직 기간 30만원 570만원",
+        "육아휴직 특례 지원금은 육아휴직 대체인력인건비 지원을 포함하고 있으므로, 특례를 지원받은 경우에는 육아휴직 대체인력지원금 전체 기간에 대한 중복지원을 제한함"
+      ]
+    },
+    {
+      "support_type": "육아휴직 지원금",
+      "target_conditions": [
+        "우선지원대상기업 사업주",
+        "육아휴직 또는 육아기 근로시간 단축을 30일 이상 부여한 사업주"
+      ],
+      "conditions": [
+        {
+          "type": "child_age",
+          "value": null,
+          "min": 13,
+          "max": null
+        },
+        {
+          "type": "leave_duration_days",
+          "value": null,
+          "min": 30,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 300000,
+        "yearly_max_amount": 3600000,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [
+        "출산육아기 고용안정장려금 지급신청서",
+        "육아휴직 등 실시를 증명하는 서류 사본",
+        "사업주의 가족관계등록부 또는 주민등록등본"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "만 12개월 초과 30만원 360만원"
+      ]
+    },
+    {
+      "support_type": "남성 육아휴직 인센티브",
+      "target_conditions": [
+        "우선지원대상기업 사업주",
+        "육아휴직 또는 육아기 근로시간 단축을 30일 이상 부여한 사업주",
+        "사업장별 남성육아휴직 1~3번째 사례"
+      ],
+      "conditions": [
+        {
+          "type": "gender",
+          "value": "male",
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 100000,
+        "yearly_max_amount": 1200000,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [
+        "출산육아기 고용안정장려금 지급신청서",
+        "육아휴직 등 실시를 증명하는 서류 사본",
+        "사업주의 가족관계등록부 또는 주민등록등본"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "남성육아휴직 인센티브 (추가지원) 10만원 120만원",
+        "** 남성육아휴직 인센티브: 사업장별 남성육아휴직 1~3번째 사례에 대해 월 10만원 추가 지원"
+      ]
+    },
+    {
+      "support_type": "육아기 근로시간 단축 지원금",
+      "target_conditions": [
+        "우선지원대상기업 사업주",
+        "육아휴직 또는 육아기 근로시간 단축을 30일 이상 부여한 사업주"
+      ],
+      "conditions": [
+        {
+          "type": "working_hour_reduction",
+          "value": null,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 300000,
+        "yearly_max_amount": 3600000,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [
+        "출산육아기 고용안정장려금 지급신청서",
+        "육아휴직 등 실시를 증명하는 서류 사본",
+        "사업주의 가족관계등록부 또는 주민등록등본"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "육아기 근로시간 단축 지원금 일반 30만원 360만원"
+      ]
+    },
+    {
+      "support_type": "육아기 단축 인센티브",
+      "target_conditions": [
+        "우선지원대상기업 사업주",
+        "육아휴직 또는 육아기 근로시간 단축을 30일 이상 부여한 사업주",
+        "육아기 근로시간 단축을 한 번도 사용하지 않은 사업장의 사업주가 최초로 육아기 근로시간 단축을 허용한 경우",
+        "세 번째 허용 사례까지"
+      ],
+      "conditions": [
+        {
+          "type": "working_hour_reduction",
+          "value": null,
+          "min": null,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 100000,
+        "yearly_max_amount": 1200000,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [
+        "출산육아기 고용안정장려금 지급신청서",
+        "육아휴직 등 실시를 증명하는 서류 사본",
+        "사업주의 가족관계등록부 또는 주민등록등본"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "육아기 단축 인센티브 (추가지원) 10만원 120만원",
+        "*** 육아기단축 인센티브: 육아기 근로시간 단축을 한 번도 사용하지 않은 사업장의 사업주가 최초로 육아기 근로시간 단축을 허용한 경우에는, 세 번째 허용 사례까지 월 10만원을 추가로 지급함"
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": null,
+    "max_people_limit": null
+  },
+  "application_process": [
+    "지원금을 지급받고자 하는 사업주는 지원금의 50%에 해당하는 금액을 육아휴직등을 시작한 날이 속하는 달의 다음달부터 3개월마다 신청할 수 있고, 나머지 금액은 육아휴직등이 끝난 후 6개월 이상 그 근로자를 계속 고용하는 경우에 한꺼번에 신청할 수 있습니다."
+  ],
+  "risk_conditions": [
+    "사업주(법인의 경우 대표이사)의 배우자 및 직계 존·비속",
+    "고용보험에 가입되어 있지 않은 근로자",
+    "고용산재보험료 징수법에 따라 사업주가 신고한 월평균 보수액이 124만원 미만인 근로자",
+    "거주(F-2)·영주(F-5)·결혼이민자(F-6)를 제외한 대한민국 국적을 보유하지 않은 외국인",
+    "국가, 지방자치단체, 공공기관(「공공기관의 운영에 관한 법률」에 따라 지정된 기관) 지원 제외",
+    "일반유흥 주점업, 무도유흥 주점업, 기타 주점업, 기타 사행시설 관리 및 운영업, 무도장 운영업 등 「중소기업인력지원 특별법 시행령」 제2조에서 정한 업종을 영위하는 사업주",
+    "「근로기준법」 제43조의2에 따라 명단이 공개중인 사업주",
+    "「산업안전보건법」 제10조에 따라 중대 산업재해 발생 등으로 명단이 공표 중인 사업주"
+  ]
+}

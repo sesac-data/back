@@ -1,0 +1,160 @@
+{
+  "policy_name": "대체인력지원금",
+  "policy_category": "사업주 지원",
+  "support_items": [
+    {
+      "support_type": "대체인력 인건비 지원",
+      "target_conditions": [
+        "우선지원대상기업 사업주",
+        "출산전후휴가, 유산ㆍ사산휴가, 육아휴직, 육아기 근로시간 단축 등을 30일 이상 부여하거나 허용"
+      ],
+      "conditions": [
+        {
+          "type": "replacement_worker_employment_days",
+          "value": null,
+          "min": 30,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": null,
+        "yearly_max_amount": null,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [
+        "출산육아기 고용안정장려금 지급신청서",
+        "근로자에 대한 육아휴직 등 실시를 증명하는 서류 사본",
+        "사업주의 가족관계등록부 또는 주민등록등본"
+      ],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "고용(사용)하기 전 3개월부터 고용(사용) 후 1년까지 고용조정으로 다른 근로자를 이직시키는 경우 장려금의 지급을 제한",
+        "사업주(법인의 경우 대표이사)의 배우자 및 직계 존·비속은 지급 제한",
+        "고용보험에 가입되어 있지 않은 근로자 지급 제한",
+        "월평균 보수액이 124만원 미만인 근로자 지급 제한",
+        "대한민국 국적을 보유하지 않은 외국인 지급 제한(단, 고용보험에 가입한 외국인 근로자는 지원대상)",
+        "국가, 지방자치단체, 공공기관 지원 제외",
+        "특정 업종(일반유흥 주점업 등) 사업주 지원 제외",
+        "근로기준법 제43조의2, 산업안전보건법 제10조에 따라 명단 공개/공표 중인 사업주 지원 제외"
+      ],
+      "evidence_snippets": [
+        "근로자의 출산휴가, 육아휴직, 육아기 근로시간 단축 등의 기간 중 대체인력을 활용하는 우선지원대상기업 사업주에게 대체인력 인건비를 지원하는 제도",
+        "출산전후휴가, 유산ㆍ사산휴가, 육아휴직, 육아기 근로시간 단축 등을 30일 이상 부여하거나 허용하고 다음의 어느 하나에 해당하는 경우에 사업주 (고용보험법 제23조, 같은 법 시행령 제29조제1항제3호)",
+        "고용(사용)하기 전 3개월부터 고용(사용) 후 1년까지(해당 대체인력의 고용(사용)기간이 1년 미만인 경우에는 그 고용(사용)관계 종료 시까지를 말함) 고용조정으로 다른 근로자를 이직시키는 경우 장려금의 지급을 제한합니다."
+      ]
+    },
+    {
+      "support_type": "대체인력 인건비 지원(금액)",
+      "target_conditions": [
+        "출산전후휴가, 유산ㆍ사산휴가, 육아휴직, 육아기 근로시간 단축 등 사용"
+      ],
+      "conditions": [
+        {
+          "type": "company_employee_count",
+          "value": null,
+          "min": null,
+          "max": 29
+        }
+      ],
+      "support": {
+        "monthly_amount": 1400000,
+        "yearly_max_amount": null,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "대체인력지원금의 월별 지원액은 해당 대체인력에게 지급한 임금액의 80%를 초과할 수 없음"
+      ],
+      "evidence_snippets": [
+        "30인 미만 140만원"
+      ]
+    },
+    {
+      "support_type": "대체인력 인건비 지원(금액)",
+      "target_conditions": [
+        "출산전후휴가, 유산ㆍ사산휴가, 육아휴직, 육아기 근로시간 단축 등 사용"
+      ],
+      "conditions": [
+        {
+          "type": "company_employee_count",
+          "value": null,
+          "min": 30,
+          "max": null
+        }
+      ],
+      "support": {
+        "monthly_amount": 1300000,
+        "yearly_max_amount": null,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "대체인력지원금의 월별 지원액은 해당 대체인력에게 지급한 임금액의 80%를 초과할 수 없음"
+      ],
+      "evidence_snippets": [
+        "30인 이상 130만원"
+      ]
+    },
+    {
+      "support_type": "대체인력 인건비 지원(육아기 근로시간 단축)",
+      "target_conditions": [
+        "육아기 근로시간 단축"
+      ],
+      "conditions": [],
+      "support": {
+        "monthly_amount": 1200000,
+        "yearly_max_amount": null,
+        "max_duration_months": null
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "대체인력지원금의 월별 지원액은 해당 대체인력에게 지급한 임금액의 80%를 초과할 수 없음"
+      ],
+      "evidence_snippets": [
+        "육아기 근로시간 단축 공통 120만원"
+      ]
+    },
+    {
+      "support_type": "대체인력 인건비 지원(특례)",
+      "target_conditions": [
+        "만 12개월 이내 자녀(임신 중 포함)",
+        "3개월 이상 연속 부여"
+      ],
+      "conditions": [],
+      "support": {
+        "monthly_amount": 1000000,
+        "yearly_max_amount": null,
+        "max_duration_months": 3
+      },
+      "required_systems": [],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "important_conditions": [
+        "2025년 12월 31일 이전에 육아휴직을 사용한 경우에는 월 200만원 지급"
+      ],
+      "evidence_snippets": [
+        "* 특례: 만 12개월 이내 자녀(임신 중 포함), 3개월 이상 연속 부여시 첫 3개월간 월 100만원, 이후 월 30만원 (2025년 12월 31일 이전에 육아휴직을 사용한 경우에는 월 200만원 지급)"
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": null,
+    "max_people_limit": null
+  },
+  "application_process": [
+    "출산전후휴가 등을 시작한 날이 속하는 달의 다음 달부터 3개월마다 신청",
+    "제도 사용 전 인수인계 기간에 해당하는 금액은 출산전후휴가 등을 시작한 후 1개월이 지난 날부터 신청 가능",
+    "육아휴직 복직자 인수인계 기간에 해당하는 금액은 육아휴직 종료 후 1개월이 지난 날부터 (대체인력이 근로자 복직 후 1개월 이내에 이직한 경우에는 해당 대체인력이 이직한 날의 다음 날부터) 신청 가능",
+    "(2026년 1월 1일 전에 대체인력을 새로 고용·사용한 경우) 대체인력 지원금의 100분의 50에 해당하는 금액은 출산전후휴가 등을 시작한 날이 속하는 달의 다음 달부터 3개월마다, 나머지 금액은 출산전후 휴가 등이 끝난 후 1개월이 지난 날부터 한꺼번에 신청"
+  ],
+  "risk_conditions": [
+    "육아휴직 특례 지원금은 육아휴직 대체인력인건비 지원을 포함하고 있으므로, 특례를 지원받은 경우에는 육아휴직 대체인력지원금 전체 기간에 대한 중복지원을 제한함"
+  ]
+}

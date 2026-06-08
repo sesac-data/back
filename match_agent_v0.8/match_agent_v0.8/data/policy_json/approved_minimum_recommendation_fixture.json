@@ -1,0 +1,101 @@
+{
+  "policy_key": "approved_minimum_recommendation_fixture",
+  "policy_name": "Childcare flexible start support minimum approved fixture",
+  "policy_category": "employer_support",
+  "source_url": "local:data/policy_json/childcare_flexible_start_support.json",
+  "source_document_id": "childcare_flexible_start_support",
+  "review_status": "approved",
+  "approved_by": "test-reviewer",
+  "approved_at": "2026-06-07",
+  "extraction_model": "fixture-from-existing-policy-json",
+  "prompt_version": "n/a",
+  "support_items": [
+    {
+      "support_type": "childcare_flexible_start_support",
+      "target_conditions": [
+        "child age and weekly work hour minimum from existing childcare_flexible_start_support fixture"
+      ],
+      "conditions": [
+        {
+          "type": "child_age",
+          "value": null,
+          "min": null,
+          "max": 12,
+          "unit": "year",
+          "evidence_snippets": [
+            "?≪븘湲? ?먮?瑜???洹쇰줈?먯쓽 ?좎껌 ?깆뿉 ?곕씪 洹쇰줈?쒓컙???⑥텞 * 留?12???댄븯 ?먮뒗 珥덈벑?숆탳 6?숇뀈 ?댄븯"
+          ]
+        },
+        {
+          "type": "weekly_work_hours",
+          "value": null,
+          "min": 35,
+          "max": null,
+          "unit": "hour_per_week",
+          "evidence_snippets": [
+            "?⑥텞 ??6媛쒖썡 ?댁긽 二?35?쒓컙 ?댁긽?쇰줈 洹쇰Т??洹쇰줈?????"
+          ]
+        },
+        {
+          "type": "requires_attendance_system",
+          "value": true,
+          "min": null,
+          "max": null,
+          "unit": "boolean",
+          "evidence_snippets": [
+            "?꾩옄쨌湲곌퀎??諛⑸쾿(遺숈엫 李멸퀬)???섑븳 洹쇳깭愿由?* 異쒗눜洹쇨린濡??꾨씫?쇱닔媛 ??3??珥덇낵(4???댁긽) ???대떦?붿쓽 ?λ젮湲덉? 吏?먰븯吏 ?딆쓬"
+          ]
+        },
+        {
+          "type": "requires_labor_agreement",
+          "value": true,
+          "min": null,
+          "max": null,
+          "unit": "boolean",
+          "evidence_snippets": [
+            "痍⑥뾽洹쒖튃 ?깆뿉 ?뚯젙洹쇰줈?쒓컙 ?⑥텞?????洹쒖젙"
+          ]
+        },
+        {
+          "type": "requires_contract_change",
+          "value": true,
+          "min": null,
+          "max": null,
+          "unit": "boolean",
+          "evidence_snippets": [
+            "痍⑥뾽洹쒖튃 ?깆뿉 ?뚯젙洹쇰줈?쒓컙 ?⑥텞?????洹쒖젙"
+          ]
+        }
+      ],
+      "support": {
+        "monthly_amount": 300000,
+        "yearly_max_amount": 3600000,
+        "max_duration_months": 12,
+        "evidence_snippets": [
+          "??30留뚯썝",
+          "吏湲됱씪濡쒕???理쒕? 1??"
+        ]
+      },
+      "required_systems": [
+        "attendance_system"
+      ],
+      "required_documents": [],
+      "duplicate_allowed": [],
+      "duplicate_disallowed": [],
+      "important_conditions": [],
+      "evidence_snippets": [
+        "?꾩씪??洹쇰줈?먯쓽 ?≪븘 ?ъ쑀濡?洹쇰줈?쒓컙 ?⑥텞???덉슜???곗꽑吏?먮??곴린??以묒냼湲곗뾽 ?ы븿) 쨌 以묎껄湲곗뾽 ?ъ뾽二쇰? 吏?먰빀?덈떎."
+      ]
+    }
+  ],
+  "support_limit": {
+    "max_people_ratio": 0.3,
+    "max_people_limit": 30,
+    "company_level_limit_amount": null,
+    "evidence_snippets": [
+      "?꾨뀈??留먯씪 怨좎슜蹂댄뿕 ?쇰낫?섏옄 ?섏쓽 30% (?쇰낫?섏옄?섍? 10紐?誘몃쭔??寃쎌슦 3紐? ?쒕룄濡?理쒕? 30紐?"
+    ]
+  },
+  "application_process": [],
+  "risk_conditions": []
+}
