@@ -1,5 +1,6 @@
 # services/condition_evaluator.py
 
+from datetime import date
 from typing import Any, Dict, List
 
 
@@ -84,7 +85,7 @@ def build_condition_result(
     reason: str
 ) -> Dict:
 
-    return {
+    result = {
         "condition_id":
             condition.get(
                 "condition_id"
@@ -116,6 +117,147 @@ def build_condition_result(
                 "evidence_snippets",
                 []
             )
+    }
+
+    if condition.get(
+        "reason_code"
+    ):
+
+        result[
+            "reason_code"
+        ] = condition.get(
+            "reason_code"
+        )
+
+    return result
+
+
+def parse_iso_date(
+    value
+):
+
+    if not isinstance(
+        value,
+        str
+    ):
+
+        return None
+
+    try:
+
+        return date.fromisoformat(
+            value
+        )
+
+    except ValueError:
+
+        return None
+
+
+def subtract_months(
+    source_date: date,
+    months: int
+):
+
+    month_index = (
+        source_date.year
+        * 12
+        + source_date.month
+        - 1
+        - months
+    )
+    year = month_index // 12
+    month = month_index % 12 + 1
+    day = source_date.day
+
+    while day > 28:
+
+        try:
+
+            return date(
+                year,
+                month,
+                day,
+            )
+
+        except ValueError:
+
+            day -= 1
+
+    return date(
+        year,
+        month,
+        day,
+    )
+
+
+def resolve_expected_value(
+    input_data: Dict,
+    condition: Dict
+):
+
+    expected = condition.get(
+        "expected"
+    )
+
+    if not isinstance(
+        expected,
+        dict
+    ):
+
+        return {
+            "expected":
+                expected,
+            "error":
+                None,
+        }
+
+    if expected.get(
+        "type"
+    ) != "relative_date":
+
+        return {
+            "expected":
+                expected,
+            "error":
+                None,
+        }
+
+    source_field = expected.get(
+        "source_field"
+    )
+    source_value = get_nested_value(
+        input_data,
+        source_field,
+    )
+    source_date = parse_iso_date(
+        source_value
+    )
+
+    if source_date is None:
+
+        return {
+            "expected":
+                None,
+            "error":
+                "relative_date_source_invalid",
+        }
+
+    months_before = expected.get(
+        "months_before",
+        0,
+    )
+
+    return {
+        "expected":
+            subtract_months(
+                source_date,
+                int(
+                    months_before
+                ),
+            ).isoformat(),
+        "error":
+            None,
     }
 
 
@@ -161,9 +303,25 @@ def evaluate_operator_condition(
             "input_field_missing"
         )
 
-    expected = condition.get(
+    resolved_expected = resolve_expected_value(
+        input_data,
+        condition,
+    )
+    expected = resolved_expected.get(
         "expected"
     )
+
+    if resolved_expected.get(
+        "error"
+    ):
+
+        return build_condition_result(
+            condition,
+            actual,
+            resolved_expected.get(
+                "error"
+            ),
+        )
 
     try:
 

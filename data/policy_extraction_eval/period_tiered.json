@@ -1,0 +1,113 @@
+{
+  "case_id": "period_tiered",
+  "case_name": "Period tiered extraction fixture",
+  "source_text": "TEST SOURCE: Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6.",
+  "expected_policy": {
+    "policy_id": "EVAL-TIERED",
+    "policy_name": "Eval Period Tiered Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-TIERED",
+        "support_type": "period_tiered",
+        "conditions": [
+          {
+            "condition_id": "C-SMALL",
+            "field": "company.size",
+            "operator": "eq",
+            "expected": "small",
+            "evidence_snippets": [
+              "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+            ]
+          }
+        ],
+        "support": {
+          "calculation_type": "period_tiered",
+          "max_months": 6,
+          "evidence_snippets": [
+            "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+          ]
+        },
+        "tiers": [
+          {
+            "start_month": 1,
+            "end_month": 3,
+            "monthly_amount": 120,
+            "evidence_snippets": [
+              "120 per month for months 1 to 3"
+            ]
+          },
+          {
+            "start_month": 4,
+            "end_month": 6,
+            "monthly_amount": 80,
+            "evidence_snippets": [
+              "80 per month for months 4 to 6"
+            ]
+          }
+        ],
+        "evidence_snippets": [
+          "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+        ]
+      }
+    ],
+    "combination_rules": []
+  },
+  "candidate_policy": {
+    "policy_id": "EVAL-TIERED",
+    "policy_name": "Eval Period Tiered Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-TIERED",
+        "support_type": "period_tiered",
+        "conditions": [
+          {
+            "condition_id": "C-SMALL",
+            "field": "company.size",
+            "operator": "eq",
+            "expected": "small",
+            "evidence_snippets": [
+              "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+            ]
+          }
+        ],
+        "support": {
+          "calculation_type": "period_tiered",
+          "max_months": 6,
+          "evidence_snippets": [
+            "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+          ]
+        },
+        "tiers": [
+          {
+            "start_month": 4,
+            "end_month": 6,
+            "monthly_amount": 80,
+            "evidence_snippets": [
+              "80 per month for months 4 to 6"
+            ]
+          },
+          {
+            "start_month": 1,
+            "end_month": 3,
+            "monthly_amount": 120,
+            "evidence_snippets": [
+              "120 per month for months 1 to 3"
+            ]
+          }
+        ],
+        "evidence_snippets": [
+          "Small companies receive 120 per month for months 1 to 3 and 80 per month for months 4 to 6."
+        ]
+      }
+    ],
+    "combination_rules": []
+  }
+}

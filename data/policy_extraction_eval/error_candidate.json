@@ -1,0 +1,110 @@
+{
+  "case_id": "error_candidate",
+  "case_name": "Candidate with intentional extraction mistakes",
+  "source_text": "TEST SOURCE: Small companies receive 100 per month for up to 6 months. This policy cannot be combined with POLICY-OTHER.",
+  "expected_policy": {
+    "policy_id": "EVAL-ERROR",
+    "policy_name": "Eval Error Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "Small companies receive 100 per month for up to 6 months."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-ERROR",
+        "support_type": "monthly_fixed",
+        "conditions": [
+          {
+            "condition_id": "C-SMALL",
+            "field": "company.size",
+            "operator": "eq",
+            "expected": "small",
+            "evidence_snippets": [
+              "Small companies receive 100 per month for up to 6 months."
+            ]
+          },
+          {
+            "condition_id": "C-LEAVE",
+            "field": "employee.leave_type",
+            "operator": "eq",
+            "expected": "parental_leave",
+            "evidence_snippets": [
+              "Small companies receive 100 per month for up to 6 months."
+            ]
+          }
+        ],
+        "support": {
+          "calculation_type": "monthly_fixed",
+          "monthly_amount": 100,
+          "max_months": 6,
+          "evidence_snippets": [
+            "Small companies receive 100 per month for up to 6 months."
+          ]
+        },
+        "tiers": [
+          {
+            "start_month": 1,
+            "end_month": 6,
+            "monthly_amount": 100,
+            "evidence_snippets": [
+              "up to 6 months"
+            ]
+          }
+        ],
+        "evidence_snippets": [
+          "Small companies receive 100 per month for up to 6 months."
+        ]
+      }
+    ],
+    "combination_rules": [
+      {
+        "rule_id": "CR-ERROR",
+        "rule_type": "mutually_exclusive",
+        "target_policy_ids": [
+          "POLICY-OTHER"
+        ],
+        "reason": "cannot be combined",
+        "evidence_snippets": [
+          "This policy cannot be combined with POLICY-OTHER."
+        ]
+      }
+    ]
+  },
+  "candidate_policy": {
+    "policy_id": "EVAL-ERROR",
+    "policy_name": "Eval Error Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [],
+    "support_items": [
+      {
+        "support_item_id": "SI-ERROR",
+        "support_type": "monthly_fixed",
+        "conditions": [
+          {
+            "condition_id": "C-SMALL",
+            "field": "company.size",
+            "operator": "gte",
+            "expected": "small",
+            "evidence_snippets": []
+          }
+        ],
+        "support": {
+          "calculation_type": "monthly_fixed",
+          "monthly_amount": 90,
+          "max_months": 12,
+          "evidence_snippets": []
+        },
+        "tiers": [
+          {
+            "start_month": 2,
+            "end_month": 6,
+            "monthly_amount": 90,
+            "evidence_snippets": []
+          }
+        ],
+        "evidence_snippets": []
+      }
+    ],
+    "combination_rules": []
+  }
+}

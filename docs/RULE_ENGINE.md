@@ -76,8 +76,47 @@ Current candidate files:
 - `services/condition_registry.py`
 - `services/calculation_service.py`
 - `services/gap_analysis_service.py`
+- `services/rule_engine_domain_adapter.py`
 
 The existing evaluator handles only part of the policy condition surface. Expanding the engine requires tests for every newly supported condition type.
+
+## Domain Adapter
+
+`services/rule_engine_domain_adapter.py` converts general-company domain input into the rule-engine input shape.
+
+Current adapter output:
+
+```json
+{
+  "rule_input": {
+    "company": {
+      "size": "small",
+      "has_replacement_worker": true
+    },
+    "employee": {
+      "leave_type": "parental_leave"
+    }
+  },
+  "requested_months": 4,
+  "errors": []
+}
+```
+
+Adapter responsibilities:
+
+- Read `company`, `employee`, and `leave_event` sections from the API payload.
+- Prefer `leave_event.leave_type` over `employee.leave_type`.
+- Prefer `leave_event.has_replacement_worker` over `company.has_replacement_worker`.
+- Calculate `requested_months` from explicit `requested_months` or inclusive leave dates.
+- Return structured errors for invalid date ranges or non-positive explicit months.
+
+Adapter non-goals:
+
+- Do not evaluate policy eligibility.
+- Do not calculate policy amounts.
+- Do not infer policy source conditions.
+- Do not generate combinations or recommendations.
+- Do not connect to the database.
 
 ## Test Expectations
 

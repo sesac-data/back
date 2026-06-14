@@ -17,6 +17,7 @@ SCENARIOS = [
     "conflict",
     "requires",
     "employer_net_cost",
+    "optimal_combination",
 ]
 
 if str(ROOT_DIR) not in sys.path:
@@ -34,6 +35,9 @@ from services.combination_amount_summarizer import (  # noqa: E402
 )
 from services.employer_net_cost_calculator import (  # noqa: E402
     calculate_employer_net_costs,
+)
+from services.optimal_combination_selector import (  # noqa: E402
+    select_optimal_combination,
 )
 from services.policy_combination_generator import (  # noqa: E402
     generate_valid_policy_combinations,
@@ -158,6 +162,24 @@ def execute_acceptance_fixture(fixture):
         for combination in summary_result.get("rejected_combinations", [])
     )
 
+    employer_net_cost_result = (
+        calculate_employer_net_costs(
+            summary_result.get("summarized_combinations", []),
+            input_snapshot.get("employer_cost_items", []),
+        )
+        if "employer_cost_items" in input_snapshot
+        else None
+    )
+
+    optimal_combination_result = (
+        select_optimal_combination(
+            employer_net_cost_result.get("cost_calculated_combinations", []),
+            rejected_combinations,
+        )
+        if employer_net_cost_result is not None
+        else None
+    )
+
     return {
         "scenario":
             fixture.get("scenario"),
@@ -176,12 +198,9 @@ def execute_acceptance_fixture(fixture):
         "summarized_combinations":
             summary_result.get("summarized_combinations", []),
         "employer_net_cost_result":
-            calculate_employer_net_costs(
-                summary_result.get("summarized_combinations", []),
-                input_snapshot.get("employer_cost_items", []),
-            )
-            if "employer_cost_items" in input_snapshot
-            else None,
+            employer_net_cost_result,
+        "optimal_combination_result":
+            optimal_combination_result,
         "errors":
             errors,
     }
@@ -220,6 +239,16 @@ def collect_applied_cost_item_ids(cost_calculated_combinations):
             for cost_item in combination.get("applied_cost_items", [])
         ]
         for combination in cost_calculated_combinations
+    ]
+
+
+def collect_alternative_policy_ids(optimal_combination_result):
+    return [
+        combination.get("policy_ids", [])
+        for combination in optimal_combination_result.get(
+            "alternative_combinations",
+            [],
+        )
     ]
 
 
@@ -335,6 +364,33 @@ def build_actual(result):
                 ),
         })
 
+    optimal_combination_result = result.get(
+        "optimal_combination_result"
+    )
+
+    if optimal_combination_result is not None:
+        recommended_combination = optimal_combination_result.get(
+            "recommended_combination"
+        ) or {}
+        actual.update({
+            "recommended_policy_ids":
+                recommended_combination.get(
+                    "policy_ids"
+                ),
+            "recommended_net_employer_cost":
+                recommended_combination.get(
+                    "net_employer_cost"
+                ),
+            "recommended_total_subsidy_amount":
+                recommended_combination.get(
+                    "total_subsidy_amount"
+                ),
+            "alternative_policy_ids":
+                collect_alternative_policy_ids(
+                    optimal_combination_result
+                ),
+        })
+
     return actual
 
 
@@ -381,6 +437,10 @@ def run_acceptance_scenario(scenario):
         "total_employer_cost",
         "net_employer_cost",
         "expected_applied_cost_item_ids",
+        "recommended_policy_ids",
+        "recommended_net_employer_cost",
+        "recommended_total_subsidy_amount",
+        "alternative_policy_ids",
     ]:
         if field not in expected:
             continue
@@ -412,6 +472,18 @@ def run_acceptance_scenario(scenario):
             "expected": [],
             "actual": employer_net_cost_result.get("errors"),
             "message": "employer net cost calculation returned unexpected errors",
+        })
+
+    optimal_combination_result = result.get(
+        "optimal_combination_result"
+    )
+
+    if optimal_combination_result and optimal_combination_result.get("errors"):
+        failures.append({
+            "field": "optimal_combination_result.errors",
+            "expected": [],
+            "actual": optimal_combination_result.get("errors"),
+            "message": "optimal combination selection returned unexpected errors",
         })
 
     if not has_evidence_and_steps(result):

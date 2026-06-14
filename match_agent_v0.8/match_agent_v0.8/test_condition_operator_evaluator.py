@@ -279,6 +279,58 @@ def test_evidence_snippets_are_linked():
     ]
 
 
+def test_relative_date_condition_can_fail_with_reason_code():
+
+    input_data = {
+        "leave_event":
+            {
+                "start_date":
+                    "2025-06-16",
+            },
+        "replacement_worker":
+            {
+                "hire_date":
+                    "2025-01-05",
+            },
+    }
+
+    result = evaluate_operator_conditions(
+        input_data,
+        [
+            {
+                "condition_id":
+                    "replacement-hire-window",
+                "field":
+                    "replacement_worker.hire_date",
+                "operator":
+                    "gte",
+                "expected":
+                    {
+                        "type":
+                            "relative_date",
+                        "source_field":
+                            "leave_event.start_date",
+                        "months_before":
+                            2,
+                    },
+                "reason_code":
+                    "replacement_worker_hired_before_allowed_window",
+                "evidence_snippets":
+                    [
+                        "replacement worker hire window evidence"
+                    ],
+            }
+        ],
+    )
+
+    failure = result["failed_conditions"][0]
+
+    assert result["eligible"] is False
+    assert failure["actual"] == "2025-01-05"
+    assert failure["reason"] == "condition_not_met"
+    assert failure["reason_code"] == "replacement_worker_hired_before_allowed_window"
+
+
 if __name__ == "__main__":
 
     test_all_conditions_pass()
@@ -288,5 +340,5 @@ if __name__ == "__main__":
     test_missing_input_field()
     test_null_value_handling()
     test_evidence_snippets_are_linked()
+    test_relative_date_condition_can_fail_with_reason_code()
     print("test_condition_operator_evaluator passed")
-

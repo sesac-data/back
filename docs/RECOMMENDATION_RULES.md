@@ -182,6 +182,44 @@ Cost item rules:
 - Net-cost calculation does not choose an optimal combination, rank recommendations, or sort by amount.
 - Acceptance verification includes a test-only `employer_net_cost` scenario that compares expected `total_subsidy_amount`, `total_employer_cost`, `net_employer_cost`, and applied `cost_id` values against the existing calculator output.
 
+## Employer Net Cost Based Optimal Combination Selection
+
+The current optimal-combination selector chooses one recommendation from already calculated employer net-cost results.
+
+Input boundary:
+
+- The selector consumes only `cost_calculated_combinations` produced by `calculate_employer_net_costs`.
+- `rejected_combinations` may be passed through for audit display, but rejected combinations are never recommendation candidates.
+- The selector does not recalculate subsidy amounts, employer costs, or net employer costs.
+- The selector does not inspect policy source text, employee data, policy category, or employer cost inputs to create a score.
+- The selector does not use an LLM.
+
+Validation rules:
+
+- A candidate must have non-empty `policy_ids`.
+- A candidate must have non-null `net_employer_cost`.
+- A candidate must have non-null `total_subsidy_amount`.
+- Duplicate `policy_ids` combinations return structured errors and are not merged.
+- Negative `net_employer_cost` is valid and may be recommended.
+- If no valid candidate remains, the selector returns `recommended_combination: null` with a structured `no_recommendation_candidates` error.
+
+Selection order:
+
+1. `net_employer_cost` ascending
+2. If tied, `total_subsidy_amount` descending
+3. If tied, included policy count ascending
+4. If tied, `policy_ids` lexicographic string order
+
+Output rules:
+
+- The first sorted candidate is returned as `recommended_combination`.
+- Remaining sorted candidates are returned as `alternative_combinations`.
+- Returned combinations include deterministic `rank` values.
+- Rank 1 uses the fixed code-based reason `사업주 순비용이 가장 낮은 조합입니다.`
+- Alternatives use the fixed code-based reason `비교 가능한 대안 조합입니다.`
+- When a tie-break is used, the applied tie-break keys are recorded in `tie_break_applied` and appended to the reason.
+- Optimal-combination selection does not change frontend mock display data, choose policies from rejected combinations, or implement `allowed_with` exceptions.
+
 ## Combination Optimization
 
 The optimizer should select a combination that maximizes expected support amount while respecting:

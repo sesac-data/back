@@ -1,0 +1,83 @@
+{
+  "case_id": "combination_rules",
+  "case_name": "Combination rules extraction fixture",
+  "source_text": "TEST SOURCE: This policy cannot be combined with POLICY-OTHER because the same subsidy is paid twice.",
+  "expected_policy": {
+    "policy_id": "EVAL-COMBINATION",
+    "policy_name": "Eval Combination Rule Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "This policy cannot be combined with POLICY-OTHER because the same subsidy is paid twice."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-COMBINATION",
+        "support_type": "monthly_fixed",
+        "conditions": [],
+        "support": {
+          "calculation_type": "monthly_fixed",
+          "monthly_amount": 100,
+          "max_months": 3,
+          "evidence_snippets": [
+            "same subsidy is paid twice"
+          ]
+        },
+        "evidence_snippets": [
+          "same subsidy is paid twice"
+        ]
+      }
+    ],
+    "combination_rules": [
+      {
+        "rule_id": "CR-1",
+        "rule_type": "mutually_exclusive",
+        "target_policy_ids": [
+          "POLICY-OTHER"
+        ],
+        "reason": "same subsidy is paid twice",
+        "evidence_snippets": [
+          "This policy cannot be combined with POLICY-OTHER because the same subsidy is paid twice."
+        ]
+      }
+    ]
+  },
+  "candidate_policy": {
+    "policy_id": "EVAL-COMBINATION",
+    "policy_name": "Eval Combination Rule Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "This policy cannot be combined with POLICY-OTHER because the same subsidy is paid twice."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-COMBINATION",
+        "support_type": "monthly_fixed",
+        "conditions": [],
+        "support": {
+          "calculation_type": "monthly_fixed",
+          "monthly_amount": 100,
+          "max_months": 3,
+          "evidence_snippets": [
+            "same subsidy is paid twice"
+          ]
+        },
+        "evidence_snippets": [
+          "same subsidy is paid twice"
+        ]
+      }
+    ],
+    "combination_rules": [
+      {
+        "rule_id": "CR-1",
+        "rule_type": "mutually_exclusive",
+        "target_policy_ids": [
+          "POLICY-OTHER"
+        ],
+        "reason": "same subsidy is paid twice",
+        "evidence_snippets": [
+          "This policy cannot be combined with POLICY-OTHER because the same subsidy is paid twice."
+        ]
+      }
+    ]
+  }
+}

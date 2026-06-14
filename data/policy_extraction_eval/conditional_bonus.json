@@ -1,0 +1,119 @@
+{
+  "case_id": "conditional_bonus",
+  "case_name": "Conditional bonus extraction fixture",
+  "source_text": "TEST SOURCE: Basic support is 100 per month for 6 months. If a replacement worker is hired, add 30 per month.",
+  "expected_policy": {
+    "policy_id": "EVAL-BONUS",
+    "policy_name": "Eval Conditional Bonus Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "If a replacement worker is hired, add 30 per month."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-BONUS",
+        "support_type": "conditional_bonus",
+        "conditions": [
+          {
+            "condition_id": "C-LEAVE",
+            "field": "employee.leave_type",
+            "operator": "eq",
+            "expected": "parental_leave",
+            "evidence_snippets": [
+              "Basic support is 100 per month for 6 months."
+            ]
+          }
+        ],
+        "support": {
+          "calculation_type": "conditional_bonus",
+          "monthly_amount": 100,
+          "max_months": 6,
+          "evidence_snippets": [
+            "Basic support is 100 per month for 6 months."
+          ]
+        },
+        "bonuses": [
+          {
+            "bonus_id": "B-REPLACEMENT",
+            "bonus_amount": 30,
+            "conditions": [
+              {
+                "condition_id": "C-REPLACEMENT",
+                "field": "company.has_replacement_worker",
+                "operator": "eq",
+                "expected": true,
+                "evidence_snippets": [
+                  "If a replacement worker is hired, add 30 per month."
+                ]
+              }
+            ],
+            "evidence_snippets": [
+              "If a replacement worker is hired, add 30 per month."
+            ]
+          }
+        ],
+        "evidence_snippets": [
+          "Basic support is 100 per month for 6 months."
+        ]
+      }
+    ],
+    "combination_rules": []
+  },
+  "candidate_policy": {
+    "policy_id": "EVAL-BONUS",
+    "policy_name": "Eval Conditional Bonus Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "If a replacement worker is hired, add 30 per month."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-BONUS",
+        "support_type": "conditional_bonus",
+        "conditions": [
+          {
+            "condition_id": "C-LEAVE",
+            "field": "employee.leave_type",
+            "operator": "eq",
+            "expected": "parental_leave",
+            "evidence_snippets": [
+              "Basic support is 100 per month for 6 months."
+            ]
+          }
+        ],
+        "support": {
+          "calculation_type": "conditional_bonus",
+          "monthly_amount": 100,
+          "max_months": 6,
+          "evidence_snippets": [
+            "Basic support is 100 per month for 6 months."
+          ]
+        },
+        "bonuses": [
+          {
+            "bonus_id": "B-REPLACEMENT",
+            "bonus_amount": 30,
+            "conditions": [
+              {
+                "condition_id": "C-REPLACEMENT",
+                "field": "company.has_replacement_worker",
+                "operator": "eq",
+                "expected": true,
+                "evidence_snippets": [
+                  "If a replacement worker is hired, add 30 per month."
+                ]
+              }
+            ],
+            "evidence_snippets": [
+              "If a replacement worker is hired, add 30 per month."
+            ]
+          }
+        ],
+        "evidence_snippets": [
+          "Basic support is 100 per month for 6 months."
+        ]
+      }
+    ],
+    "combination_rules": []
+  }
+}

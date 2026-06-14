@@ -116,6 +116,36 @@ LLMs must not decide:
 - Combination optimization
 - Missing policy requirements not present in source text
 
+## Policy Extraction Evaluation Harness
+
+LLM policy extraction candidates can be evaluated offline before any human approval or runtime recommendation use.
+
+```text
+data/policy_extraction_eval/*.json
+  -> scripts/run_policy_extraction_eval.py
+  -> services/policy_structure_evaluator.py
+  -> output/policy_extraction_eval/latest-report.json
+  -> output/policy_extraction_eval/latest-report.md
+```
+
+This harness compares test-only policy source text, human-written expected JSON, and assumed LLM candidate JSON. It does not call a live LLM API, does not auto-correct candidate JSON, and does not mark any candidate as approved. Candidate fixtures must remain `review_status="needs_review"`.
+
+The evaluator is separate from the Rule Engine and recommendation pipeline. It must not change policy formulas, eligibility evaluation, policy loading, combination generation, API behavior, DB schema, or frontend UI.
+
+Live LLM extraction evaluation is a separate batch harness:
+
+```text
+data/policy_extraction_eval/*.json
+  -> prompts/policy_extraction_v1.md
+  -> services/openai_policy_extraction_adapter.py
+  -> services/policy_structure_evaluator.py
+  -> output/policy_extraction_eval/generated/
+  -> output/policy_extraction_eval/model-comparison-report.json
+  -> output/policy_extraction_eval/model-comparison-report.md
+```
+
+The live harness calls OpenAI only when `OPENAI_API_KEY` is configured. It stores raw responses and parsed candidates for review, but does not write to the DB, does not auto-repair JSON, and does not approve candidates.
+
 ## Verification Boundary
 
 The harness is centered on `scripts/verify.sh`.
@@ -172,8 +202,111 @@ Current integration behavior:
 
 - The component calls `fetchGeneralCompanyRecommendationDemo`.
 - The service delegates to the active adapter.
-- The active adapter is mock-based because there is no callable recommendation API endpoint in the React app yet.
+- The default active adapter is mock-based for stable local demo behavior.
+- API mode can call `POST /api/demo/recommendations/calculate` and can choose `policy_source=demo_fixture|policy_db`.
 - The component consumes a structure aligned with `combination_amount_summarizer` output: `summarized_combinations`, `rejected_combinations`, policy-level calculation summaries, `calculation_steps`, and `evidence_snippets`.
-- The mock adapter can later be replaced with an API adapter without changing the screen component contract.
+- The mock adapter and API adapter share the same screen component contract.
 
 The demo must not describe results as "optimal recommendations" or "best combinations." Until optimizer and ranking logic exists, the UI should use comparison language such as "지원금 조합 비교" and "가장 높은 총지원금".
+
+## Demo Recommendation API Boundary
+
+The general-company recommendation demo can now call a minimal local API for deterministic backend calculation.
+
+- Endpoint: `POST /api/demo/recommendations/calculate`
+- Health endpoint: `GET /health`
+- FastAPI app: `match_agent_v0.8/match_agent_v0.8/api_server.py`
+- Server entry point: `scripts/run_demo_recommendation_api.py`
+- Orchestration service: `match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py`
+- Frontend API adapter: `match_agent_v0.8/match_agent_v0.8/frontend/src/services/apiRecommendationAdapter.js`
+- Adapter selector: `VITE_RECOMMENDATION_ADAPTER=mock|api`
+- Policy source selector: request field `policy_source=demo_fixture|policy_db`
+- Default adapter: `mock`
+
+The FastAPI server is a minimal HTTP layer over the existing demo orchestration service. It exposes Swagger UI at `/docs`, allows CORS only for local Vite dev origins `http://127.0.0.1:5173` and `http://localhost:5173`, and does not duplicate calculation logic.
+
+The API is a demo-only orchestration layer over the existing backend services:
+
+```text
+HTTP request
+  -> request schema validation
+  -> approved policy loader
+  -> selected source: test-only demo fixture or policy_db
+  -> approved policy calculation
+  -> standardized policy result normalization
+  -> valid/rejected policy combination generation
+  -> combination amount summarization
+  -> explicit employer net-cost calculation
+  -> existing optimal-combination selector
+  -> response with source meta
+```
+
+The API uses `services/approved_policy_loader.py` as the policy source boundary. The loader supports:
+
+- `demo_fixture`: reads `data/acceptance_scenarios/optimal_combination.json` as test fixture data.
+- `policy_db`: reads approved and active policy JSON from PostgreSQL `subsidy_policies`.
+
+Both sources return only policies with `review_status == "approved"` before orchestration receives them. The `policy_db` source also requires `is_active = TRUE` at the table row level and verifies that `policy_json.review_status` matches the DB column value. If DB connection, table lookup, JSON parsing, or review-status validation fails, the loader returns structured errors and does not fall back to demo fixtures.
+
+The API does not store recommendation history, implement login or permissions, infer costs, or add production deployment behavior.
+
+Response metadata must identify the data boundary:
+
+```json
+{
+  "meta": {
+    "data_source": "demo_fixture",
+    "is_demo": true,
+    "policy_source": {
+      "data_source": "demo_fixture",
+      "is_demo": true,
+      "fixture": "optimal_combination"
+    },
+    "loaded_policy_count": 2
+  }
+}
+```
+
+When the request contains `"policy_source": "policy_db"`, the API uses the same approved policy loader `policy_db` path and returns metadata such as:
+
+```json
+{
+  "meta": {
+    "data_source": "policy_db",
+    "is_demo": false,
+    "policy_source": {
+      "data_source": "policy_db",
+      "is_demo": false,
+      "table": "subsidy_policies"
+    },
+    "loaded_policy_count": 2
+  }
+}
+```
+
+The frontend does not duplicate backend eligibility, amount, combination, net-cost, or optimal-selection logic. In API mode, it sends the browser input and selected policy source to the API adapter and renders the returned `recommended_combination`, `alternative_combinations`, `rejected_combinations`, `errors`, and `meta`. The screen displays `데모 정책 데이터 기준 결과입니다.` for `demo_fixture` and `Supabase 테스트 정책 DB 기준 결과입니다.` for `policy_db`.
+
+## Rule Engine Domain Adapter Boundary
+
+The demo API now separates domain input normalization from recommendation orchestration.
+
+- Adapter location: `match_agent_v0.8/match_agent_v0.8/services/rule_engine_domain_adapter.py`
+- Current scope: general-company demo requests only
+- Input: API payload sections `company`, `employee`, and `leave_event`
+- Output: deterministic `rule_input`, `requested_months`, and structured `errors`
+
+The adapter maps product/domain-shaped request data into the rule-engine shape consumed by existing calculation services:
+
+```json
+{
+  "company": {
+    "size": "small",
+    "has_replacement_worker": true
+  },
+  "employee": {
+    "leave_type": "parental_leave"
+  }
+}
+```
+
+The adapter may calculate request duration from explicit `requested_months` or leave dates, but it must not calculate policy amounts, infer policy conditions, select policies, generate combinations, calculate employer costs, or choose the recommended combination.

@@ -383,6 +383,13 @@ function RecommendationDemo() {
 
   const validCombinations = result?.summarized_combinations || [];
   const rejectedCombinations = result?.rejected_combinations || [];
+  const recommendedCombination = result?.recommended_combination || null;
+  const currentDataSource = result?.meta?.data_source || result?.meta?.policy_source?.data_source;
+  const sourceNotice = currentDataSource === 'policy_db'
+    ? 'Supabase 테스트 정책 DB 기준 결과입니다.'
+    : result?.meta?.is_demo === true
+      ? '데모 정책 데이터 기준 결과입니다.'
+      : '';
   const highestTotal = validCombinations.reduce((highest, combination) => {
     const amount = combination.total_subsidy_amount;
     if (amount === null || amount === undefined) {
@@ -409,7 +416,12 @@ function RecommendationDemo() {
     try {
       const nextResult = await fetchGeneralCompanyRecommendationDemo(input);
       setResult(nextResult);
-      setSelected(nextResult.summarized_combinations?.[0] || nextResult.rejected_combinations?.[0] || null);
+      setSelected(
+        nextResult.recommended_combination
+        || nextResult.summarized_combinations?.[0]
+        || nextResult.rejected_combinations?.[0]
+        || null
+      );
     } catch (demoError) {
       setError(demoError.message || '계산 오류가 발생했습니다.');
     } finally {
@@ -427,6 +439,7 @@ function RecommendationDemo() {
         </div>
         <div className="demo-status">
           <span>{result?.isMock ? 'mock adapter 사용 중' : 'API adapter 사용 중'}</span>
+          {sourceNotice && <em>{sourceNotice}</em>}
           <strong>경로: /company/recommendation-demo</strong>
         </div>
       </section>
@@ -493,6 +506,23 @@ function RecommendationDemo() {
             <MetricCard label="계산 기준일" value={result.calculatedAt || '-'} hint={result.isMock ? 'mock 데이터' : 'API 데이터'} tone="slate" />
           </div>
 
+          {recommendedCombination && (
+            <section className="panel recommended-panel">
+              <div className="panel-head">
+                <div>
+                  <h2>추천 조합</h2>
+                  <p>데모 정책 데이터 기준 결과입니다.</p>
+                </div>
+                <span className="detail-badge valid">rank {recommendedCombination.rank || 1}</span>
+              </div>
+              <CombinationCard
+                combination={recommendedCombination}
+                selected={selected === recommendedCombination}
+                onSelect={() => setSelected(recommendedCombination)}
+              />
+            </section>
+          )}
+
           <div className="demo-result-grid">
             <section className="panel">
               <h2>유효 조합 목록</h2>
@@ -546,7 +576,14 @@ function CombinationCard({ combination, selected, onSelect }) {
         <dd>{formatDemoMoney(combination.total_bonus_amount)}</dd>
         <dt>총지원금</dt>
         <dd>{formatDemoMoney(combination.total_subsidy_amount)}</dd>
+        {'net_employer_cost' in combination && (
+          <>
+            <dt>사업주 순비용</dt>
+            <dd>{formatDemoMoney(combination.net_employer_cost)}</dd>
+          </>
+        )}
       </dl>
+      {combination.recommendation_reason && <p>{combination.recommendation_reason}</p>}
       <button className="outline small" onClick={onSelect}>상세 보기</button>
     </article>
   );

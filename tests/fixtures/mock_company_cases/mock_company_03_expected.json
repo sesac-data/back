@@ -1,0 +1,206 @@
+{
+  "case_id": "mock_company_03",
+  "fixture_notice": "TEST FIXTURE ONLY. Draft expected recommendation behavior for a mock company upload case. Do not save to DB or treat as approved policy data.",
+  "source_folder": "C:\\Users\\laiep\\project_sesac\\data\\가상기업데이터_20개\\01_주식회사_블루오션푸드",
+  "source_files": {
+    "company_features": "기업특징.txt",
+    "business_registration": "사업자등록증.pdf",
+    "employees": "직원명단.xlsx"
+  },
+  "file_presence": {
+    "company_features": true,
+    "business_registration": true,
+    "employees": true
+  },
+  "generation_status": {
+    "status": "draft_created",
+    "errors": [],
+    "missing_files": []
+  },
+  "extracted_fields": {
+    "company": {
+      "company_name": "(주)블루오션푸드",
+      "business_registration_number": "127-86-18129",
+      "industry_code": "20423",
+      "insured_employee_count": 13,
+      "is_priority_support_enterprise": null,
+      "is_small_or_medium_company": true
+    },
+    "employee": {
+      "name": "이민준",
+      "department_role": "연구개발팀/선임연구원",
+      "employment_type_source_value": "정규직",
+      "hire_date": "2024-12-09",
+      "leave_type": "parental_leave",
+      "leave_type_source_value": "육아휴직",
+      "salary_monthly": 5910000
+    },
+    "leave_event": {
+      "leave_type": "parental_leave",
+      "start_date": "2025-06-02",
+      "end_date": "2025-07-15",
+      "duration_days": 44,
+      "requested_months_for_current_adapter": 2,
+      "has_replacement_worker": false
+    },
+    "replacement_worker": {
+      "name": null,
+      "department_role": null,
+      "employment_type_source_value": null,
+      "hire_date": null,
+      "work_start_date": null,
+      "work_end_date": null,
+      "employment_duration_days": null,
+      "is_new_hire": false
+    },
+    "source_feature_summary": {
+      "data_type_code": "유형1",
+      "data_type_label": "육아휴직지원금 신청 대상",
+      "program_type_source": "육아휴직",
+      "judgment_reason_text": "육아휴직을 2025-06-02부터 2025-07-15까지 약 44일(30일 이상) 부여하여 육아휴직지원금 신청 대상이다.",
+      "judgment_basis_text": "- 육아휴직/육아기 근로시간 단축 지원금: 해당 제도를 30일 이상 부여(허용)한 우선지원대상기업 사업주가 대상.\n- 출처: 고용노동부 일생활균형 누리집(worklife.kr) 사업주 지원 안내"
+    }
+  },
+  "recommendation_engine_input_draft": {
+    "policy_source": "demo_fixture",
+    "company": {
+      "name": "(주)블루오션푸드",
+      "business_registration_number": "127-86-18129",
+      "size": "small",
+      "insured_employee_count": 13,
+      "is_priority_support_enterprise": null,
+      "is_small_or_medium_company": true,
+      "has_replacement_worker": false
+    },
+    "employee": {
+      "name": "이민준",
+      "department_role": "연구개발팀/선임연구원",
+      "employment_type": "정규직",
+      "hire_date": "2024-12-09",
+      "leave_type": "parental_leave",
+      "salary_monthly": 5910000
+    },
+    "leave_event": {
+      "leave_type": "parental_leave",
+      "start_date": "2025-06-02",
+      "end_date": "2025-07-15",
+      "requested_months": 2,
+      "duration_days": 44,
+      "has_replacement_worker": false
+    },
+    "replacement_worker": {
+      "name": null,
+      "department_role": null,
+      "employment_type_source_value": null,
+      "hire_date": null,
+      "work_start_date": null,
+      "work_end_date": null,
+      "employment_duration_days": null,
+      "is_new_hire": false
+    },
+    "employer_cost_items": []
+  },
+  "field_mapping": {
+    "mapped_to_current_demo_api": [
+      "company.name",
+      "company.business_registration_number",
+      "company.size",
+      "company.has_replacement_worker",
+      "employee.name",
+      "employee.leave_type",
+      "leave_event.leave_type",
+      "leave_event.start_date",
+      "leave_event.end_date",
+      "leave_event.requested_months",
+      "leave_event.duration_days",
+      "leave_event.has_replacement_worker",
+      "replacement_worker.hire_date",
+      "replacement_worker.employment_duration_days",
+      "employer_cost_items"
+    ],
+    "missing_or_not_provided": [
+      "company.is_priority_support_enterprise",
+      "employee.child_age",
+      "employee.child_age_months",
+      "employee.child_school_grade"
+    ]
+  },
+  "policy_verification_mapping": [
+    {
+      "policy_id": "parental_leave_reduction_support",
+      "case_relevance": "target_policy",
+      "verification_status": "expected_result_draft",
+      "expected_status": "eligible",
+      "expected_reason_code": "parental_leave_or_reduction_duration_30_days_met"
+    },
+    {
+      "policy_id": "replacement_workshare_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "worklife_balance_45_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "childcare_flexible_start_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "working_hours_reduction_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "flexible_work_incent",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "flexible_work_system_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    }
+  ],
+  "expected_result": {
+    "primary_assertion": {
+      "policy_id": "parental_leave_reduction_support",
+      "expected_status": "eligible",
+      "expected_reason_code": "parental_leave_or_reduction_duration_30_days_met",
+      "expected_reason": "육아휴직을 2025-06-02부터 2025-07-15까지 약 44일(30일 이상) 부여하여 육아휴직지원금 신청 대상이다."
+    },
+    "manual_calculation": {
+      "leave_start_date": "2025-06-02",
+      "leave_end_date": "2025-07-15",
+      "leave_duration_days": 44,
+      "replacement_worker_hire_date": null,
+      "replacement_employment_duration_days": null
+    },
+    "expected_recommendation_comparison": {
+      "target_policy_id": "parental_leave_reduction_support",
+      "expected_eligible_policy_ids": [
+        "parental_leave_reduction_support"
+      ],
+      "expected_rejected_policy_ids": [],
+      "expected_rejected_reason_codes": [],
+      "amount_assertion": {
+        "expected_amount": null,
+        "note": "Draft only. Actual amount comparison is intentionally deferred."
+      }
+    }
+  },
+  "comparison_readiness": {
+    "actual_vs_expected_not_run": true,
+    "comparability_likelihood": "medium",
+    "rule_input_expansion_required": [
+      "company.is_priority_support_enterprise",
+      "leave_event.duration_days"
+    ],
+    "notes": [
+      "This file is an expected-result draft only.",
+      "Actual-result comparison is intentionally deferred for the 20-case expansion step."
+    ]
+  }
+}

@@ -361,6 +361,24 @@
       "notes": "Calculates total_employer_cost and net_employer_cost from explicit employer_cost_items only, applies cost target policy IDs as AND conditions, preserves summarized combination data, and does not infer costs, rank, or select an optimal combination. Acceptance verification now includes the employer_net_cost scenario and compares subsidy totals, employer costs, net costs, and applied cost item IDs."
     },
     {
+      "id": "employer-net-cost-optimal-combination-selection",
+      "name": "Employer net cost optimal combination selection",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/optimal_combination_selector.py",
+        "match_agent_v0.8/match_agent_v0.8/test_optimal_combination_selector.py",
+        "data/acceptance_scenarios/optimal_combination.json",
+        "scripts/run_recommendation_acceptance.py",
+        "docs/RECOMMENDATION_RULES.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "employer-net-cost-calculation"
+      ],
+      "notes": "Selects the lowest net_employer_cost combination from existing employer net-cost results without recalculating amounts or costs, uses deterministic tie-breaks, preserves rejected combinations for auditability, and returns fixed code-based recommendation reasons without LLM explanation."
+    },
+    {
       "id": "general-company-recommendation-demo-screen",
       "name": "General company recommendation demo screen",
       "area": "frontend",
@@ -379,6 +397,273 @@
         "existing-react-v2-prototype"
       ],
       "notes": "Adds a general-company-only recommendation comparison demo screen using a replaceable recommendation service adapter and mock data aligned with current combination amount summaries. It does not implement API integration, optimizer/ranking, net-cost display, labor-partner screens, or frontend calculation logic."
+    },
+    {
+      "id": "demo-recommendation-api-adapter",
+      "name": "Demo recommendation API and frontend adapter",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py",
+        "scripts/run_demo_recommendation_api.py",
+        "match_agent_v0.8/match_agent_v0.8/test_demo_recommendation_api.py",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/services/apiRecommendationAdapter.js",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/services/recommendationService.js",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/App.jsx",
+        "match_agent_v0.8/match_agent_v0.8/frontend/e2e/recommendation-demo.spec.js",
+        "match_agent_v0.8/match_agent_v0.8/test_api_recommendation_adapter.py",
+        "docs/ARCHITECTURE.md",
+        "docs/DEVELOPMENT_SETUP.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "general-company-recommendation-demo-screen",
+        "employer-net-cost-optimal-combination-selection"
+      ],
+      "notes": "Adds a demo-only local recommendation API and API adapter that call the existing backend calculation pipeline through orchestration, use only test fixture data, default the frontend to the existing mock adapter, and do not change DB schema, policy formulas, combination logic, net-cost logic, optimal selection logic, or frontend mock data."
+    },
+    {
+      "id": "rule-engine-domain-adapter",
+      "name": "Domain to rule-engine input adapter",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/rule_engine_domain_adapter.py",
+        "match_agent_v0.8/match_agent_v0.8/test_rule_engine_domain_adapter.py",
+        "match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py",
+        "docs/ARCHITECTURE.md",
+        "docs/RULE_ENGINE.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "demo-recommendation-api-adapter",
+        "existing-condition-evaluator",
+        "policy-approval-gate"
+      ],
+      "notes": "Converts general-company API payload sections company, employee, and leave_event into deterministic rule_input and requested_months for the existing rule engine, returns structured adapter errors, and does not evaluate eligibility, calculate amounts, generate combinations, calculate costs, select recommendations, or connect to DB."
+    },
+    {
+      "id": "approved-policy-loader-abstraction",
+      "name": "Approved policy loader abstraction",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/approved_policy_loader.py",
+        "match_agent_v0.8/match_agent_v0.8/test_approved_policy_loader.py",
+        "match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_demo_recommendation_api.py",
+        "docs/ARCHITECTURE.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/TEST_SCENARIOS.md",
+        "docs/DEVELOPMENT_SETUP.md"
+      ],
+      "depends_on": [
+        "policy-approval-gate",
+        "demo-recommendation-api-adapter",
+        "rule-engine-domain-adapter"
+      ],
+      "notes": "Adds a policy source boundary for the demo recommendation API. The current implementation supports only the test-only demo_fixture source, filters candidate policies to review_status == approved before orchestration, returns structured errors for unsupported sources or missing fixtures, and does not connect to the real policy database."
+    },
+    {
+      "id": "policy-db-source-placeholder",
+      "name": "Policy DB source placeholder",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/approved_policy_loader.py",
+        "match_agent_v0.8/match_agent_v0.8/test_approved_policy_loader.py",
+        "docs/ARCHITECTURE.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/TEST_SCENARIOS.md",
+        "docs/DEVELOPMENT_SETUP.md"
+      ],
+      "depends_on": [
+        "approved-policy-loader-abstraction"
+      ],
+      "notes": "Reserves policy_db as a future approved-policy loader source while returning policy_db_source_not_configured with no policies today. This avoids importing DB dependencies or implying that real policy DB loading is already implemented."
+    },
+    {
+      "id": "policy-db-approved-policy-loader",
+      "name": "Policy DB approved policy loader",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/approved_policy_loader.py",
+        "match_agent_v0.8/match_agent_v0.8/test_approved_policy_loader.py",
+        "database/migrations/001_create_subsidy_policies.sql",
+        ".env.example",
+        "docs/ARCHITECTURE.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/TEST_SCENARIOS.md",
+        "docs/DEVELOPMENT_SETUP.md"
+      ],
+      "depends_on": [
+        "approved-policy-loader-abstraction",
+        "policy-db-source-placeholder"
+      ],
+      "notes": "Implements source=policy_db loading from PostgreSQL subsidy_policies using INCENTDOC_POLICY_DB_URL, returning only review_status=approved and is_active=true policy_json records, validating DB/JSON review_status consistency, and returning structured DB errors without falling back to demo fixtures."
+    },
+    {
+      "id": "demo-api-policy-source-selection",
+      "name": "Demo API policy source selection",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_demo_recommendation_api.py",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/services/apiRecommendationAdapter.js",
+        "match_agent_v0.8/match_agent_v0.8/frontend/src/App.jsx",
+        "match_agent_v0.8/match_agent_v0.8/test_api_recommendation_adapter.py",
+        "database/seeds/001_seed_subsidy_policies_test_fixtures.sql",
+        ".env.example",
+        "docs/ARCHITECTURE.md",
+        "docs/DEVELOPMENT_SETUP.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "demo-recommendation-api-adapter",
+        "policy-db-approved-policy-loader"
+      ],
+      "notes": "Adds request-level policy_source selection for demo_fixture or policy_db in the demo recommendation API, passes the selected source to the existing approved policy loader, returns source metadata and loaded policy count, keeps demo_fixture as the default, avoids fixture fallback on policy_db errors, and lets the frontend API adapter pass/display the active source without changing formulas, rule engine, combination generation, net-cost calculation, optimal selection, DB schema, frontend structure, or mock adapter."
+    },
+    {
+      "id": "fastapi-demo-recommendation-server",
+      "name": "FastAPI demo recommendation server",
+      "area": "recommendation",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/api_server.py",
+        "match_agent_v0.8/match_agent_v0.8/test_api_server.py",
+        "scripts/run_demo_recommendation_api.py",
+        "requirements-dev.txt",
+        "docs/ARCHITECTURE.md",
+        "docs/DEVELOPMENT_SETUP.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "demo-api-policy-source-selection"
+      ],
+      "notes": "Adds one minimal FastAPI HTTP layer with GET /health and POST /api/demo/recommendations/calculate, delegates request bodies to the existing run_demo_recommendation_pipeline orchestration, preserves existing response/error structures, supports demo_fixture and policy_db through the existing loader path, exposes /docs, and limits CORS to local Vite dev origins without changing calculation formulas, rule engine, policy loading logic, combination generation, net-cost calculation, optimal selection, DB schema, frontend UI, or mock adapter."
+    },
+    {
+      "id": "policy-extraction-evaluation-harness",
+      "name": "Policy extraction evaluation harness",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/policy_structure_evaluator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_structure_evaluator.py",
+        "scripts/run_policy_extraction_eval.py",
+        "data/policy_extraction_eval/monthly_fixed.json",
+        "data/policy_extraction_eval/period_tiered.json",
+        "data/policy_extraction_eval/conditional_bonus.json",
+        "data/policy_extraction_eval/combination_rules.json",
+        "data/policy_extraction_eval/error_candidate.json",
+        "output/policy_extraction_eval/latest-report.json",
+        "output/policy_extraction_eval/latest-report.md",
+        "docs/ARCHITECTURE.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/TEST_SCENARIOS.md",
+        "docs/DEVELOPMENT_SETUP.md"
+      ],
+      "depends_on": [
+        "existing-policy-extraction"
+      ],
+      "notes": "Adds an offline test fixture harness for comparing assumed LLM policy-structure candidates against human-written expected JSON. It reports per-policy scores and structured extraction errors, requires candidate fixtures to remain review_status=needs_review, does not call a live LLM API, does not auto-correct or approve candidates, and does not change recommendation engine, Rule Engine, API, DB schema, or frontend behavior."
+    },
+    {
+      "id": "live-llm-policy-extraction-evaluation",
+      "name": "Live LLM policy extraction evaluation",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_adapter.py",
+        "match_agent_v0.8/match_agent_v0.8/services/openai_policy_extraction_adapter.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_llm_eval.py",
+        "prompts/policy_extraction_v1.md",
+        "scripts/run_policy_extraction_llm_eval.py",
+        ".env.example",
+        "docs/ARCHITECTURE.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/TEST_SCENARIOS.md",
+        "docs/DEVELOPMENT_SETUP.md"
+      ],
+      "depends_on": [
+        "policy-extraction-evaluation-harness"
+      ],
+      "notes": "Adds a live OpenAI policy extraction evaluation path that calls a dedicated adapter only when OPENAI_API_KEY is configured, stores raw responses and parsed candidate JSON under output/policy_extraction_eval/generated, evaluates candidates with the existing policy_structure_evaluator, records model/prompt/token/timing/score/error metadata, keeps candidates as review_status=needs_review, does not auto-correct or approve generated JSON, and does not save to DB or change recommendation/API/frontend behavior."
+    },
+    {
+      "id": "real-policy-extraction-evaluation-dataset",
+      "name": "Real policy extraction evaluation dataset structure",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "data/policy_extraction_real_eval/README.md",
+        "data/policy_extraction_real_eval/raw_text/.gitkeep",
+        "data/policy_extraction_real_eval/gold/.gitkeep",
+        "data/policy_extraction_real_eval/metadata/.gitkeep",
+        "scripts/run_policy_extraction_llm_eval.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_llm_eval.py",
+        "docs/DEVELOPMENT_SETUP.md",
+        "docs/TEST_SCENARIOS.md"
+      ],
+      "depends_on": [
+        "live-llm-policy-extraction-evaluation"
+      ],
+      "notes": "Adds a separated real policy-source evaluation dataset structure with raw_text, gold, and metadata directories; extends the live LLM extraction runner with --dataset selection and real-eval output separation; validates raw/gold/metadata matching and required metadata fields before LLM calls; reuses policy_extraction_v2 prompts and the existing evaluator without auto-correcting, auto-approving, saving to Supabase, or changing recommendation/API/DB/frontend behavior."
+    },
+    {
+      "id": "db-builder-policy-document-extraction-bridge",
+      "name": "DB builder policy document extraction bridge",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/db_builder_policy_document_loader.py",
+        "match_agent_v0.8/match_agent_v0.8/test_db_builder_policy_document_loader.py",
+        "scripts/run_policy_extraction_from_db_builder.py"
+      ],
+      "depends_on": [
+        "live-llm-policy-extraction-evaluation"
+      ],
+      "notes": "Loads policy documents collected under the existing db_builder incent_docs structure, extracts raw text from txt, md, json, pdf, and docx files, connects each document to the existing OpenAI policy extraction adapter, attaches source_document_id, source_url, and source_file to generated candidates, writes JSON outputs under output/policy_extraction_from_db_builder, and does not change db_builder collection, analyzer, file_parser, mapping, writer_final, recommendation logic, API, DB schema, frontend, Supabase storage, approval state, or evaluator criteria."
+    },
+    {
+      "id": "db-builder-candidate-assembler-stage-1",
+      "name": "DB builder candidate assembler and policy extraction v4 prompt",
+      "area": "policy",
+      "status": "blocked",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_assembler.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_assembler.py",
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py",
+        "scripts/run_policy_extraction_from_db_builder.py",
+        "prompts/policy_extraction_v4.md"
+      ],
+      "depends_on": [
+        "db-builder-policy-document-extraction-bridge"
+      ],
+      "notes": "Stage 1 code and full verification pass: raw parsed_candidate and assembled_candidate are stored separately, db_builder incent_key is injected as policy_id only in the assembled candidate, source metadata is attached by code, and evidence validation compares whitespace-normalized strings without mutating evidence. Blocked from passing because OPENAI_API_KEY is not configured, so the v4 prompt cannot be run against childcare_flexible_start_support to verify that missing_calculation_type and unknown_policy_id disappear in a fresh LLM output."
+    },
+    {
+      "id": "parental-leave-employer-support-scope",
+      "name": "Parental leave employer support policy scope",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "scripts/run_policy_extraction_from_db_builder.py",
+        "match_agent_v0.8/match_agent_v0.8/test_db_builder_policy_scope_filter.py",
+        "test_db_builder_policy_scope_filter.py",
+        "prompts/policy_extraction_v5.md",
+        "tasks/feature_list.json",
+        "tasks/progress.md"
+      ],
+      "depends_on": [
+        "db-builder-policy-document-extraction-bridge",
+        "db-builder-candidate-assembler-stage-1"
+      ],
+      "notes": "Narrows future LLM extraction and recommendation focus to seven childcare-related employer subsidy documents: parental_leave_reduction_support, replacement_workshare_support, worklife_balance_45_support, childcare_flexible_start_support, working_hours_reduction_support, flexible_work_incent, and flexible_work_system_support. General employment incentives such as elders_employ_incent, youth_hire_incent, employ_promo_incent, and perm_conv_incent are excluded from LLM extraction execution scope. The db_builder document loader still loads documents generally; filtering happens in the extraction runner before LLM calls. policy_extraction_v5 also forbids non-calculation output fields such as application_process, application_steps, required_documents, contact_info, faq, and qna."
     },
     {
       "id": "recommendation-smoke-runner",
@@ -473,18 +758,6 @@
         "onboarding-minimum-save-flow"
       ],
       "notes": "Required input for deterministic policy evaluation."
-    },
-    {
-      "id": "rule-engine-domain-adapter",
-      "name": "Domain to rule-engine input adapter",
-      "area": "rule_engine",
-      "status": "not_started",
-      "implemented_in": [],
-      "depends_on": [
-        "employee-leave-management",
-        "condition-type-coverage-audit"
-      ],
-      "notes": "Transforms v2 company/client/employee/leave data into rule-engine inputs."
     },
     {
       "id": "recommendation-result-storage",

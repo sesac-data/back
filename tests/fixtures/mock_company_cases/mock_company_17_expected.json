@@ -1,0 +1,202 @@
+{
+  "case_id": "mock_company_17",
+  "fixture_notice": "TEST FIXTURE ONLY. Draft expected recommendation behavior for a mock company upload case. Do not save to DB or treat as approved policy data.",
+  "source_folder": "C:\\Users\\laiep\\project_sesac\\data\\가상기업데이터_20개\\04_주식회사_노을전자",
+  "source_files": {
+    "company_features": "기업특징.txt",
+    "business_registration": "사업자등록증.pdf",
+    "employees": "직원명단.xlsx"
+  },
+  "file_presence": {
+    "company_features": true,
+    "business_registration": true,
+    "employees": true
+  },
+  "generation_status": {
+    "status": "draft_created",
+    "errors": [],
+    "missing_files": []
+  },
+  "extracted_fields": {
+    "company": {
+      "company_name": "(주)노을전자",
+      "business_registration_number": "221-85-28389",
+      "industry_code": "26299",
+      "insured_employee_count": 20,
+      "is_priority_support_enterprise": null,
+      "is_small_or_medium_company": true
+    },
+    "employee": {
+      "name": "신다은",
+      "department_role": "연구개발팀/선임연구원",
+      "employment_type_source_value": "정규직",
+      "hire_date": "2024-05-06",
+      "leave_type": "parental_leave",
+      "leave_type_source_value": "육아휴직",
+      "salary_monthly": 3670000
+    },
+    "leave_event": {
+      "leave_type": "parental_leave",
+      "start_date": "2025-08-04",
+      "end_date": "2026-05-03",
+      "duration_days": 273,
+      "requested_months_for_current_adapter": 10,
+      "has_replacement_worker": true
+    },
+    "replacement_worker": {
+      "name": "이서연",
+      "department_role": "연구개발팀/선임연구원(대체)",
+      "employment_type_source_value": "파견근로자",
+      "hire_date": "2025-07-21",
+      "work_start_date": "2025-07-21",
+      "work_end_date": "2025-08-10",
+      "employment_duration_days": 21,
+      "is_new_hire": true
+    },
+    "source_feature_summary": {
+      "data_type_code": "유형4",
+      "data_type_label": "대체인력지원금 비대상",
+      "program_type_source": "육아휴직",
+      "judgment_reason_text": "육아휴직은 30일 이상 부여했으나, 파견 대체인력 사용기간이 2025-07-21~2025-08-10로 21일에 그쳐 \"30일 이상 계속 사용\" 요건을 충족하지 못해 대체인력 지원금 신청 대상이 아니다.",
+      "judgment_basis_text": "- 대체인력 지원금: 출산휴가·육아휴직·육아기 단축 등을 30일 이상 부여하고,\n  시작일 전 2개월이 되는 날 이후 신규로 대체인력을 고용(또는 파견 사용)하여 30일 이상 계속 고용한 경우 대상.\n- 출처: 고용노동부 일생활균형 누리집(worklife.kr) 사업주 지원 안내"
+    }
+  },
+  "recommendation_engine_input_draft": {
+    "policy_source": "demo_fixture",
+    "company": {
+      "name": "(주)노을전자",
+      "business_registration_number": "221-85-28389",
+      "size": "small",
+      "insured_employee_count": 20,
+      "is_priority_support_enterprise": null,
+      "is_small_or_medium_company": true,
+      "has_replacement_worker": true
+    },
+    "employee": {
+      "name": "신다은",
+      "department_role": "연구개발팀/선임연구원",
+      "employment_type": "정규직",
+      "hire_date": "2024-05-06",
+      "leave_type": "parental_leave",
+      "salary_monthly": 3670000
+    },
+    "leave_event": {
+      "leave_type": "parental_leave",
+      "start_date": "2025-08-04",
+      "end_date": "2026-05-03",
+      "requested_months": 10,
+      "duration_days": 273,
+      "has_replacement_worker": true
+    },
+    "replacement_worker": {
+      "name": "이서연",
+      "department_role": "연구개발팀/선임연구원(대체)",
+      "employment_type_source_value": "파견근로자",
+      "hire_date": "2025-07-21",
+      "work_start_date": "2025-07-21",
+      "work_end_date": "2025-08-10",
+      "employment_duration_days": 21,
+      "is_new_hire": true
+    },
+    "employer_cost_items": []
+  },
+  "field_mapping": {
+    "mapped_to_current_demo_api": [
+      "company.name",
+      "company.business_registration_number",
+      "company.size",
+      "company.has_replacement_worker",
+      "employee.name",
+      "employee.leave_type",
+      "leave_event.leave_type",
+      "leave_event.start_date",
+      "leave_event.end_date",
+      "leave_event.requested_months",
+      "leave_event.duration_days",
+      "leave_event.has_replacement_worker",
+      "replacement_worker.hire_date",
+      "replacement_worker.employment_duration_days",
+      "employer_cost_items"
+    ],
+    "missing_or_not_provided": [
+      "company.is_priority_support_enterprise"
+    ]
+  },
+  "policy_verification_mapping": [
+    {
+      "policy_id": "parental_leave_reduction_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "replacement_workshare_support",
+      "case_relevance": "target_policy",
+      "verification_status": "expected_result_draft",
+      "expected_status": "ineligible",
+      "expected_reason_code": "replacement_worker_employment_duration_under_30_days"
+    },
+    {
+      "policy_id": "worklife_balance_45_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "childcare_flexible_start_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "working_hours_reduction_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "flexible_work_incent",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    },
+    {
+      "policy_id": "flexible_work_system_support",
+      "case_relevance": "not_primary_target",
+      "verification_status": "not_evaluated_in_this_draft"
+    }
+  ],
+  "expected_result": {
+    "primary_assertion": {
+      "policy_id": "replacement_workshare_support",
+      "expected_status": "ineligible",
+      "expected_reason_code": "replacement_worker_employment_duration_under_30_days",
+      "expected_reason": "육아휴직은 30일 이상 부여했으나, 파견 대체인력 사용기간이 2025-07-21~2025-08-10로 21일에 그쳐 \"30일 이상 계속 사용\" 요건을 충족하지 못해 대체인력 지원금 신청 대상이 아니다."
+    },
+    "manual_calculation": {
+      "leave_start_date": "2025-08-04",
+      "leave_end_date": "2026-05-03",
+      "leave_duration_days": 273,
+      "replacement_worker_hire_date": "2025-07-21",
+      "replacement_employment_duration_days": 21
+    },
+    "expected_recommendation_comparison": {
+      "target_policy_id": "replacement_workshare_support",
+      "expected_eligible_policy_ids": [],
+      "expected_rejected_policy_ids": [
+        "replacement_workshare_support"
+      ],
+      "expected_rejected_reason_codes": [
+        "replacement_worker_employment_duration_under_30_days"
+      ],
+      "amount_assertion": {
+        "expected_amount": 0,
+        "note": "Draft only. Actual amount comparison is intentionally deferred."
+      }
+    }
+  },
+  "comparison_readiness": {
+    "actual_vs_expected_not_run": true,
+    "comparability_likelihood": "high",
+    "rule_input_expansion_required": [],
+    "notes": [
+      "This file is an expected-result draft only.",
+      "Actual-result comparison is intentionally deferred for the 20-case expansion step."
+    ]
+  }
+}

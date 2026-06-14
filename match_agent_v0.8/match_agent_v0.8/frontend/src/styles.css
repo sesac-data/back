@@ -686,6 +686,17 @@ button {
   padding: 6px 10px;
 }
 
+.demo-status em {
+  color: var(--ink);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.recommended-panel {
+  border-color: rgba(15, 118, 110, 0.28);
+}
+
 .demo-input-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

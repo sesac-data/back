@@ -335,3 +335,420 @@
 - Limited verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode limited` passed.
 - Git check: `git rev-parse --show-toplevel` failed because this workspace is not a Git repository, so `git diff --check` was skipped.
 - Remaining issue: limited verification still skips DB-dependent tests by design: `test_db_connection.py`, `test_policy_load.py`, `test_recommendation_history_service.py`.
+
+## 2026-06-08 Employer Net Cost Optimal Combination Selection
+
+- Scope: implemented one optimal-combination selector based on existing employer net-cost results only. No UI, API, DB structure, real policy data, `allowed_with` exception handling, LLM explanation generation, frontend mock adapter change, policy amount formula change, combination generation change, amount summarization change, or employer net-cost recalculation was performed.
+- Read first: `AGENTS.md`, `docs/POLICY_SCHEMA.md`, `docs/RECOMMENDATION_RULES.md`, `docs/TEST_SCENARIOS.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Analyzed before change: `match_agent_v0.8/match_agent_v0.8/services/employer_net_cost_calculator.py`, `match_agent_v0.8/match_agent_v0.8/test_employer_net_cost_calculator.py`, `scripts/run_recommendation_acceptance.py`, `data/acceptance_scenarios/employer_net_cost.json`, and `docs/RECOMMENDATION_RULES.md`.
+- Added `match_agent_v0.8/match_agent_v0.8/services/optimal_combination_selector.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_optimal_combination_selector.py`.
+- Added `data/acceptance_scenarios/optimal_combination.json` with test-only policy fixtures and explicit employer cost items.
+- Updated `scripts/run_recommendation_acceptance.py` so scenarios with employer net-cost results can call `select_optimal_combination` and compare recommended policy IDs, recommended net employer cost, recommended total subsidy amount, and alternative policy IDs.
+- Updated `docs/RECOMMENDATION_RULES.md` with selection boundaries, validation rules, fixed recommendation reasons, and deterministic tie-break order.
+- Updated `docs/TEST_SCENARIOS.md` with optimal-combination selector scenarios and the `optimal_combination` backend acceptance scenario.
+- Updated `tasks/feature_list.json` by adding only `employer-net-cost-optimal-combination-selection` as `passing` after verification passed.
+- Selection input: `cost_calculated_combinations` from `calculate_employer_net_costs`; `rejected_combinations` are preserved but not used as candidates.
+- Selection order: `net_employer_cost` ascending, `total_subsidy_amount` descending, included policy count ascending, then `policy_ids` lexicographic order.
+- Recommendation reason rule: rank 1 uses `사업주 순비용이 가장 낮은 조합입니다.`; alternatives use `비교 가능한 대안 조합입니다.`; tie-breaks are recorded in `tie_break_applied` and appended to the reason.
+- Test result: `python test_optimal_combination_selector.py` passed.
+- Acceptance single scenario result: `python scripts\run_recommendation_acceptance.py --scenario optimal_combination` passed; recommended policy IDs were `["smoke-optimal-a"]`, recommended net employer cost was `600`, and the highest subsidy combination `["smoke-optimal-a", "smoke-optimal-b"]` remained an alternative because its net employer cost was `1480`.
+- Acceptance regression result: `python scripts\run_recommendation_acceptance.py` passed for `base`, `bonus`, `capped`, `conflict`, `requires`, `employer_net_cost`, and `optimal_combination`.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed and wrote `output/verification/latest-report.md`.
+- Limited verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode limited` passed.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: limited verification still skips DB-dependent tests by design: `test_db_connection.py`, `test_policy_load.py`, `test_recommendation_history_service.py`.
+
+## 2026-06-08 Demo Recommendation API Adapter
+
+- Scope: implemented one minimal demo recommendation API and frontend API adapter only. No DB schema change, real policy DB connection, recommendation history storage, login, permissions, signup, onboarding, labor-partner screen, document management, `allowed_with` exception handling, production deployment behavior, existing calculation formula change, combination generation change, employer net-cost logic change, optimal selection logic change, or frontend mock adapter deletion was performed.
+- Read first: `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/RULE_ENGINE.md`, `docs/RECOMMENDATION_RULES.md`, `docs/TEST_SCENARIOS.md`, `docs/DEVELOPMENT_SETUP.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Existing API server structure analysis: no FastAPI, Flask, `APIRouter`, `@app.route`, uvicorn, or existing HTTP API server structure was found, so no API framework was added. A minimal local demo API server was implemented with Python standard library `http.server`.
+- Added orchestration service: `match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py`.
+- Added local API server entry point: `scripts/run_demo_recommendation_api.py`.
+- Added backend API tests: `match_agent_v0.8/match_agent_v0.8/test_demo_recommendation_api.py`.
+- Added frontend API adapter: `match_agent_v0.8/match_agent_v0.8/frontend/src/services/apiRecommendationAdapter.js`.
+- Updated frontend adapter selection: `match_agent_v0.8/match_agent_v0.8/frontend/src/services/recommendationService.js` now defaults to mock and switches to API with `VITE_RECOMMENDATION_ADAPTER=api`.
+- Updated demo screen: `match_agent_v0.8/match_agent_v0.8/frontend/src/App.jsx` displays `recommended_combination`, keeps alternative/rejected lists, shows API/mock adapter status, and shows `데모 정책 데이터 기준 결과입니다.` when API meta marks demo fixture data.
+- Updated Playwright E2E: `match_agent_v0.8/match_agent_v0.8/frontend/e2e/recommendation-demo.spec.js` now supports both default mock and API adapter modes.
+- Added frontend adapter tests: `match_agent_v0.8/match_agent_v0.8/test_api_recommendation_adapter.py`.
+- Updated docs: `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT_SETUP.md`, and `docs/TEST_SCENARIOS.md`.
+- Updated `tasks/feature_list.json` by adding only `demo-recommendation-api-adapter` as `passing` after verification passed.
+- API endpoint: `POST /api/demo/recommendations/calculate`.
+- Request fields: `company`, `employee`, `leave_event`, and optional `employer_cost_items`.
+- Response fields: `recommended_combination`, `alternative_combinations`, `rejected_combinations`, `errors`, and `meta`.
+- Demo meta: `meta.data_source == "demo_fixture"` and `meta.is_demo == true`.
+- API orchestration order: validate request, load test-only `optimal_combination` fixture, calculate approved policies, normalize policy calculation results, generate valid/rejected combinations, summarize combination amounts, calculate explicit employer net costs, select optimal combination, and return the result.
+- Direct API server check result: started `python scripts\run_demo_recommendation_api.py`, posted to `http://127.0.0.1:8000/api/demo/recommendations/calculate`, and received `recommended_combination.policy_ids == ["smoke-optimal-a"]`, `net_employer_cost == 600`, `meta.is_demo == true`, and `meta.data_source == "demo_fixture"`.
+- API adapter mode E2E result: started the demo API server, built the frontend with `VITE_RECOMMENDATION_ADAPTER=api` and `VITE_RECOMMENDATION_API_BASE_URL=http://127.0.0.1:8000`, then ran `npm.cmd run test:e2e`; Playwright passed.
+- Backend acceptance result: `python scripts\run_recommendation_acceptance.py` passed for `base`, `bonus`, `capped`, `conflict`, `requires`, `employer_net_cost`, and `optimal_combination`.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed and wrote `output/verification/latest-report.md`.
+- Limited verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode limited` passed.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: this is demo-fixture-only API integration. It does not connect to the real policy database or store recommendation logs. Limited verification still skips DB-dependent tests by design: `test_db_connection.py`, `test_policy_load.py`, `test_recommendation_history_service.py`.
+
+## 2026-06-13 Rule Engine Domain Adapter
+
+- Scope: implemented one general-company domain-to-rule-engine adapter only. No policy formula, policy combination generation, amount summarization, employer net-cost calculation, optimal selection, frontend mock adapter, API route shape, DB schema, recommendation history, login, onboarding, labor-partner flow, or real policy DB connection was changed.
+- Read first: `AGENTS.md`, `docs/RULE_ENGINE.md`, `docs/ARCHITECTURE.md`, `tasks/feature_list.json`, and the current demo API orchestration/tests.
+- Added `match_agent_v0.8/match_agent_v0.8/services/rule_engine_domain_adapter.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_rule_engine_domain_adapter.py`.
+- Updated `match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py` to call `adapt_general_company_request_to_rule_engine` instead of building `rule_input` inline.
+- Updated `docs/ARCHITECTURE.md`, `docs/RULE_ENGINE.md`, and `docs/TEST_SCENARIOS.md` with the adapter boundary and scenarios.
+- Updated `tasks/feature_list.json` by converting `rule-engine-domain-adapter` from `not_started` to `passing`.
+- Adapter input: API payload sections `company`, `employee`, and `leave_event`.
+- Adapter output: `rule_input`, `requested_months`, and structured `errors`.
+- Current mapping: `company.size`, `company.has_replacement_worker`, and `employee.leave_type`.
+- Precedence rules: `leave_event.leave_type` overrides `employee.leave_type`; `leave_event.has_replacement_worker` overrides `company.has_replacement_worker`.
+- Requested month rules: explicit positive `leave_event.requested_months` is used when present; otherwise inclusive `start_date` and `end_date` are converted to months; missing dates use the current demo default of `4`.
+- Error rules: end date before start date and non-positive explicit requested months return structured errors.
+- Test result: `python test_rule_engine_domain_adapter.py` passed.
+- API regression result: `python test_demo_recommendation_api.py` passed.
+- Backend acceptance result: `python scripts\run_recommendation_acceptance.py` passed.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed and wrote `output/verification/latest-report.md`.
+- Limited verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode limited` passed.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: the adapter currently covers the general-company demo request shape only. DB-dependent tests still skip in limited mode: `test_db_connection.py`, `test_policy_load.py`, `test_recommendation_history_service.py`.
+
+## 2026-06-13 Approved Policy Loader Abstraction
+
+- Scope: implemented one approved-policy loader boundary only. No calculation formula, combination generation, employer net-cost calculation, optimal selection, frontend UI, API route shape, DB schema, recommendation history, login, onboarding, labor-partner flow, or real policy DB connection was changed.
+- Read first: `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/RULE_ENGINE.md`, `docs/RECOMMENDATION_RULES.md`, `docs/TEST_SCENARIOS.md`, `docs/analysis/CURRENT_STATE.md`, `docs/analysis/GAP_ANALYSIS.md`, `docs/analysis/IMPLEMENTATION_ORDER.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Added `match_agent_v0.8/match_agent_v0.8/services/approved_policy_loader.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_approved_policy_loader.py`.
+- Updated `match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py` to load candidate policies through `load_approved_policies()` instead of reading the demo fixture directly.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_demo_recommendation_api.py` to assert the `meta.policy_source` demo fixture boundary.
+- Updated `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/TEST_SCENARIOS.md`, and `docs/DEVELOPMENT_SETUP.md`.
+- Updated `tasks/feature_list.json` by adding only `approved-policy-loader-abstraction` as `passing`.
+- Current loader source: `demo_fixture` only.
+- Current fixture: `data/acceptance_scenarios/optimal_combination.json`.
+- Approval gate: only policies with `review_status == "approved"` are returned to recommendation orchestration.
+- Structured loader errors: unsupported sources return `unsupported_policy_source`; missing fixtures return `demo_fixture_not_found`.
+- Test result: `python test_approved_policy_loader.py` passed.
+- API regression result: `python test_demo_recommendation_api.py` passed.
+- Backend acceptance result: `python scripts\run_recommendation_acceptance.py` passed.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed and wrote `output/verification/latest-report.md`.
+- Limited verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode limited` passed.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: this loader still supports only the demo fixture source. A real approved-policy DB source is not implemented yet, and limited verification still skips DB-dependent tests: `test_db_connection.py`, `test_policy_load.py`, `test_recommendation_history_service.py`.
+
+## 2026-06-13 Policy DB Source Placeholder
+
+- Scope: added one safety placeholder for the future policy DB loader source only. No real DB connection, DB query, DB schema, policy calculation formula, combination generation, employer net-cost calculation, optimal selection, frontend UI, API route shape, recommendation history, login, onboarding, or labor-partner flow was changed.
+- Read first: `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/RECOMMENDATION_RULES.md`, `docs/TEST_SCENARIOS.md`, `tasks/feature_list.json`, and the existing approved policy loader/tests.
+- Updated `match_agent_v0.8/match_agent_v0.8/services/approved_policy_loader.py` so `source="policy_db"` is recognized as a reserved future source and returns no policies with a structured `policy_db_source_not_configured` error.
+- Kept unknown sources separate: unrecognized source names still return `unsupported_policy_source`.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_approved_policy_loader.py` with policy DB placeholder and unknown source coverage.
+- Updated `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/TEST_SCENARIOS.md`, and `docs/DEVELOPMENT_SETUP.md` to document that `policy_db` is reserved but not configured.
+- Updated `tasks/feature_list.json` by adding only `policy-db-source-placeholder` as `passing`.
+- Test result: `python test_approved_policy_loader.py` passed.
+- API regression result: `python test_demo_recommendation_api.py` passed.
+- Backend acceptance result: `python scripts\run_recommendation_acceptance.py` passed.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed and wrote `output/verification/latest-report.md`.
+- Limited verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode limited` passed.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: real approved-policy DB loading is still not implemented. Limited verification still skips DB-dependent tests: `test_db_connection.py`, `test_policy_load.py`, `test_recommendation_history_service.py`.
+
+## 2026-06-13 Policy DB Approved Policy Loader
+
+- Scope: implemented one `source="policy_db"` approved-policy loader feature only. No recommendation calculation formula, condition evaluator, combination generator, employer net-cost calculator, optimal selector, frontend UI, mock adapter, real policy registration, LLM extraction, admin review screen, recommendation history storage, or API route shape was changed.
+- Read first: `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/RULE_ENGINE.md`, `docs/RECOMMENDATION_RULES.md`, `docs/TEST_SCENARIOS.md`, `docs/DEVELOPMENT_SETUP.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Analyzed before change: `services/approved_policy_loader.py`, `test_approved_policy_loader.py`, `test_db_connection.py`, `test_policy_load.py`, `test_recommendation_history_service.py`, `services/demo_recommendation_orchestrator.py`, `database/db.py`, `database/models.py`, `database/crud.py`, `requirements-dev.txt`, and `.env.example`.
+- Existing DB structure analysis: `incentives` and `policy_versions` already store policy metadata and versioned JSON, but they do not include an `is_active` column needed by this task. Added a minimal `subsidy_policies` migration for the requested approved+active loader path instead of altering existing tables.
+- Added `database/migrations/001_create_subsidy_policies.sql`.
+- Updated `match_agent_v0.8/match_agent_v0.8/services/approved_policy_loader.py` so `source="policy_db"` reads from PostgreSQL `subsidy_policies`.
+- Policy DB environment variable: `INCENTDOC_POLICY_DB_URL`.
+- Query condition: `review_status = 'approved'` and `is_active = TRUE`.
+- Returned data: successful rows return `policy_json` objects unchanged to the existing recommendation engine.
+- Review validation: DB column `review_status` must match `policy_json.review_status`; mismatches return `policy_db_review_status_mismatch` and are not corrected.
+- Error codes implemented: `policy_db_connection_failed`, `policy_db_table_not_found`, `approved_policy_not_found`, `policy_db_invalid_json`, `policy_db_review_status_mismatch`, and existing `unsupported_policy_source`.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_approved_policy_loader.py` with fake-connection coverage for approved active loading, exclusion of `needs_review`, `deprecated`, and inactive rows, no approved result, connection failure, table missing, invalid JSON, review-status mismatch, unknown source, and demo fixture regression.
+- Added optional real DB assertion in `test_approved_policy_loader.py`; it runs only when `INCENTDOC_RUN_POLICY_DB_INTEGRATION=true` and `INCENTDOC_POLICY_DB_URL` are configured.
+- Updated `.env.example` with `INCENTDOC_POLICY_DB_URL` and `INCENTDOC_RUN_POLICY_DB_INTEGRATION`.
+- Updated docs: `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/TEST_SCENARIOS.md`, and `docs/DEVELOPMENT_SETUP.md`.
+- Updated `tasks/feature_list.json` by adding only `policy-db-approved-policy-loader` as `passing`.
+- Test result: `python test_approved_policy_loader.py` passed. Real DB integration assertion was skipped because `INCENTDOC_RUN_POLICY_DB_INTEGRATION` and `INCENTDOC_POLICY_DB_URL` were not configured in this session.
+- API regression result: `python test_demo_recommendation_api.py` passed.
+- Backend acceptance result: `python scripts\run_recommendation_acceptance.py` passed.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed and wrote `output/verification/latest-report.md`.
+- Limited verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode limited` passed.
+- Full verification result: skipped because the current environment does not have `INCENTDOC_RUN_POLICY_DB_INTEGRATION=true` and `INCENTDOC_POLICY_DB_URL` configured for a dedicated test PostgreSQL database.
+- Remaining issue: real DB integration was not exercised locally; apply `database/migrations/001_create_subsidy_policies.sql` to a dedicated test database and set the policy DB environment variables before running full DB verification.
+
+## 2026-06-13 Policy Loader Test Environment Isolation
+
+- Scope: fixed only `test_approved_policy_loader.py` environment variable isolation for the no-DB-URL error test. No loader logic, DB schema, recommendation calculation, frontend, or mock adapter code was changed.
+- Root cause: `test_policy_db_connection_failed_without_url()` passed `db_url=""`, and the loader intentionally falls back to `INCENTDOC_POLICY_DB_URL` when the explicit URL is falsy. If the parent PowerShell session had that environment variable set, the test no longer represented the no-URL case.
+- Added `temporary_env()` context manager to remove selected environment variables during a test and restore their previous values afterward.
+- Isolated `INCENTDOC_POLICY_DB_URL` and `INCENTDOC_RUN_POLICY_DB_INTEGRATION` during `test_policy_db_connection_failed_without_url()`.
+- Checked other policy DB error tests: they pass explicit non-empty `db_url` values and are not affected by external `INCENTDOC_POLICY_DB_URL`. The optional real DB integration test still runs only when `INCENTDOC_RUN_POLICY_DB_INTEGRATION=true`.
+- Test result: `python test_approved_policy_loader.py` passed.
+- Environment-set regression result: with `INCENTDOC_POLICY_DB_URL=postgresql://example-set-in-shell` and `INCENTDOC_RUN_POLICY_DB_INTEGRATION=false`, `python test_approved_policy_loader.py` passed.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: real DB integration is still intentionally gated behind `INCENTDOC_RUN_POLICY_DB_INTEGRATION=true` and was not executed in this fix.
+
+## 2026-06-13 Demo API Policy Source Selection
+
+- Scope: implemented only the minimal `policy_source` selection path for the existing demo recommendation API and frontend API adapter. No calculation formulas, rule engine behavior, combination generation, employer net-cost calculation, optimal selector, DB schema, frontend screen structure, or mock adapter data were changed.
+- Read first: `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/RECOMMENDATION_RULES.md`, `docs/TEST_SCENARIOS.md`, `docs/DEVELOPMENT_SETUP.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Updated `match_agent_v0.8/match_agent_v0.8/services/demo_recommendation_orchestrator.py` so request payloads may include `policy_source` with allowed values `demo_fixture` or `policy_db`; missing values default to `demo_fixture`.
+- The API now passes the selected source into `load_approved_policies(source=...)`, returns `meta.data_source`, `meta.is_demo`, `meta.policy_source`, and `meta.loaded_policy_count`, and returns policy DB loader errors without falling back to fixtures.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_demo_recommendation_api.py` with demo fixture regression, fake policy DB success, policy DB error no-fallback, and unsupported source coverage.
+- Updated `match_agent_v0.8/match_agent_v0.8/frontend/src/services/apiRecommendationAdapter.js` so API mode sends `policy_source` from input, `policySource`, or `VITE_RECOMMENDATION_POLICY_SOURCE`, defaulting to `demo_fixture`.
+- Updated `match_agent_v0.8/match_agent_v0.8/frontend/src/App.jsx` to show `데모 정책 데이터 기준 결과입니다.` for demo fixture and `Supabase 테스트 정책 DB 기준 결과입니다.` for policy DB responses.
+- Added `database/seeds/001_seed_subsidy_policies_test_fixtures.sql` with calculation-capable, test-only approved active rows for `smoke-optimal-a` and `smoke-optimal-b`.
+- Updated `.env.example`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT_SETUP.md`, and `docs/TEST_SCENARIOS.md`.
+- Updated `tasks/feature_list.json` by adding only `demo-api-policy-source-selection` as `passing`.
+- Direct test results: `python test_demo_recommendation_api.py` passed; `python test_api_recommendation_adapter.py` passed.
+- Backend acceptance result: `python scripts\run_recommendation_acceptance.py` passed.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed; frontend E2E passed and wrote `output/verification/latest-report.md`.
+- Full verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode full` passed with 269 Python tests and frontend build.
+- Policy DB direct check: this shell did not have `INCENTDOC_POLICY_DB_URL` configured, so live Supabase calculation was not executed. A `policy_source=policy_db` API orchestration call returned `policy_db_connection_failed` with `meta.data_source=policy_db`, `is_demo=false`, and `loaded_policy_count=0`, confirming no fixture fallback.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: to see real Supabase policy DB results in the browser, configure `INCENTDOC_POLICY_DB_URL`, apply `database/migrations/001_create_subsidy_policies.sql`, optionally apply `database/seeds/001_seed_subsidy_policies_test_fixtures.sql`, run the API server, and start the frontend with `VITE_RECOMMENDATION_ADAPTER=api` and `VITE_RECOMMENDATION_POLICY_SOURCE=policy_db`.
+
+## 2026-06-13 FastAPI Demo Recommendation Server
+
+- Scope: added only the minimal FastAPI HTTP server layer for the existing recommendation orchestration. No calculation formula, Rule Engine behavior, policy loading logic, combination generation, employer net-cost calculation, optimal selection, DB schema, frontend UI, or mock adapter code was changed.
+- Read first: `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT_SETUP.md`, `docs/TEST_SCENARIOS.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Added `match_agent_v0.8/match_agent_v0.8/api_server.py` with `app = FastAPI(title="Incentdoc Demo Recommendation API")`.
+- Added `GET /health`, returning `{"status": "ok"}`.
+- Added `POST /api/demo/recommendations/calculate`, passing the request JSON body directly into `run_demo_recommendation_pipeline(...)` and returning the orchestration result unchanged.
+- Added local-only CORS origins: `http://127.0.0.1:5173` and `http://localhost:5173`.
+- Replaced `scripts/run_demo_recommendation_api.py` with a uvicorn wrapper around `api_server:app`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_api_server.py` covering health, demo fixture POST, policy DB POST success-or-structured-error behavior, unsupported `policy_source`, and CORS.
+- Updated `requirements-dev.txt` with `fastapi` and `uvicorn`; both were already available in the current environment.
+- Updated docs: `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT_SETUP.md`, and `docs/TEST_SCENARIOS.md`.
+- Updated `tasks/feature_list.json` by adding only `fastapi-demo-recommendation-server` as `passing`.
+- Direct test results: `python test_api_server.py` passed; `python test_demo_recommendation_api.py` passed.
+- Backend acceptance result: `python scripts\run_recommendation_acceptance.py` passed.
+- Actual HTTP check: started `python -m uvicorn api_server:app --host 127.0.0.1 --port 8000` from `match_agent_v0.8/match_agent_v0.8`; `GET /health` returned `{"status":"ok"}`.
+- Actual demo fixture API check: `POST /api/demo/recommendations/calculate` returned `meta.data_source=demo_fixture` and recommended policy IDs `smoke-optimal-a,smoke-optimal-b`.
+- Actual policy DB API check: `POST /api/demo/recommendations/calculate` with `policy_source=policy_db` returned `meta.data_source=policy_db` and a structured `policy_db_connection_failed` error in the direct HTTP check; during full pytest this environment also produced an existing `no_recommendation_candidates` structured error for policy DB data, so the API server test accepts either success or structured non-fixture policy DB errors.
+- Full verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode full` passed with 274 Python tests and frontend build.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed with frontend build, backend acceptance, Playwright E2E, and `output/verification/latest-report.md`.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: policy DB HTTP behavior depends on the configured test DB contents. To return a successful policy DB recommendation rather than a structured policy DB/no-candidate error, seed calculation-capable approved active test rows with `database/seeds/001_seed_subsidy_policies_test_fixtures.sql`.
+
+## 2026-06-14 Policy Extraction Evaluation Harness
+
+- Scope: added only an offline policy structure evaluation harness for assumed LLM extraction outputs. No live LLM API, recommendation engine, Rule Engine, API behavior, DB schema, frontend UI, policy loading, combination generation, net-cost calculation, or optimal selection code was changed.
+- Read first: `AGENTS.md`, `docs/POLICY_SCHEMA.md`, `docs/TEST_SCENARIOS.md`, `tasks/feature_list.json`, and `tasks/progress.md`; also reviewed `docs/ARCHITECTURE.md` and `docs/DEVELOPMENT_SETUP.md` before documentation updates.
+- Added `match_agent_v0.8/match_agent_v0.8/services/policy_structure_evaluator.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_policy_structure_evaluator.py`.
+- Added `scripts/run_policy_extraction_eval.py`.
+- Added five test-only fixtures under `data/policy_extraction_eval/`: `monthly_fixed`, `period_tiered`, `conditional_bonus`, `combination_rules`, and `error_candidate`.
+- Candidate fixtures remain `review_status="needs_review"`; the evaluator reports `invalid_review_status` if a candidate is already `approved`.
+- Evaluation rules: array order alone is ignored; conditions are compared by `condition_id`; tiers by `start_month` and `end_month`; combination rules by `rule_id`; evidence snippets are exact source-backed strings.
+- Score rule: `score = passed_checks / total_checks * 100`; any structured error makes that policy result `passed=false`.
+- Error types implemented: `missing_field`, `value_mismatch`, `type_mismatch`, `missing_condition`, `operator_mismatch`, `amount_mismatch`, `duration_mismatch`, `tier_mismatch`, `missing_evidence`, `missing_combination_rule`, and `invalid_review_status`.
+- Generated reports: `output/policy_extraction_eval/latest-report.json` and `output/policy_extraction_eval/latest-report.md`.
+- Evaluation run: `python scripts\run_policy_extraction_eval.py` passed, case count `5`, average score `89.47`. The intentional error fixture scored `47.37` and reported amount, duration, tier, condition, evidence, operator, and combination rule errors.
+- Unit test result: `python test_policy_structure_evaluator.py` passed.
+- Full verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode full` passed with `285 passed` and frontend build.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed with frontend build, backend acceptance, Playwright E2E, and `output/verification/latest-report.md`.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: this harness only evaluates static fixtures. Live LLM extraction execution and prompt/model comparison are intentionally not connected yet.
+
+## 2026-06-14 Live LLM Policy Extraction Evaluation
+
+- Scope: added only a live LLM extraction evaluation path over the existing policy extraction eval fixtures. No recommendation engine, Rule Engine, API behavior, DB schema, frontend UI, policy loader, combination generation, net-cost calculation, or optimal selector code was changed.
+- Read first: `AGENTS.md`, `docs/POLICY_SCHEMA.md`, `docs/TEST_SCENARIOS.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Added `match_agent_v0.8/match_agent_v0.8/services/policy_extraction_adapter.py` for the adapter interface, result shape, and JSON parse helper.
+- Added `match_agent_v0.8/match_agent_v0.8/services/openai_policy_extraction_adapter.py` as the single OpenAI adapter.
+- Added `prompts/policy_extraction_v1.md`.
+- Added `scripts/run_policy_extraction_llm_eval.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_policy_extraction_llm_eval.py`.
+- Updated `.env.example` with `POLICY_EXTRACTION_MODEL` and `POLICY_EXTRACTION_PROMPT_VERSION`.
+- Updated docs: `docs/ARCHITECTURE.md`, `docs/POLICY_SCHEMA.md`, `docs/TEST_SCENARIOS.md`, and `docs/DEVELOPMENT_SETUP.md`.
+- Updated `tasks/feature_list.json` by adding only `live-llm-policy-extraction-evaluation` as `passing`.
+- Environment variables: `OPENAI_API_KEY`, `POLICY_EXTRACTION_MODEL`, and `POLICY_EXTRACTION_PROMPT_VERSION`.
+- Default model: `gpt-4.1-mini`.
+- Default prompt version: `policy_extraction_v1`.
+- Storage: generated candidates go under `output/policy_extraction_eval/generated/{model}/`; comparison reports go to `output/policy_extraction_eval/model-comparison-report.json` and `.md`.
+- Stored execution fields: `case_id`, `model`, `prompt_version`, `raw_response`, `parsed_candidate`, `parse_error`, `elapsed_ms`, `token_usage`, `evaluator_score`, and `evaluator_errors`.
+- Review status guard: generated candidates are not corrected or approved. If a candidate returns `review_status="approved"`, the existing evaluator reports `invalid_review_status`.
+- API key handling: current shell has no `OPENAI_API_KEY`. Running `python scripts\run_policy_extraction_llm_eval.py` exited with code `2`, printed `OPENAI_API_KEY is required...`, did not print any key value, and wrote an ERROR model comparison report.
+- Unit test result: `python test_policy_extraction_llm_eval.py` passed.
+- Full verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode full` passed with `291 passed` and frontend build.
+- Demo verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode demo` passed with frontend build, backend acceptance, Playwright E2E, and `output/verification/latest-report.md`.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for touched text files.
+- Remaining issue: real OpenAI extraction scores were not produced in this environment because `OPENAI_API_KEY` is not configured. Set `OPENAI_API_KEY` and rerun `python scripts\run_policy_extraction_llm_eval.py` to generate per-policy scores.
+
+## 2026-06-14 Policy Extraction Prompt v2 Analysis
+
+- Scope: improved only the policy extraction prompt based on existing v1 LLM evaluation results. No recommendation engine, Rule Engine, API behavior, DB schema, frontend UI, evaluator criteria, expected fixtures, generated candidates, or approval state logic was changed.
+- Read first: `AGENTS.md`, `docs/POLICY_SCHEMA.md`, and `tasks/progress.md`.
+- Analyzed `output/policy_extraction_eval/model-comparison-report.json`, `prompts/policy_extraction_v1.md`, `data/policy_extraction_eval/`, and `docs/POLICY_SCHEMA.md`.
+- v1 baseline result: average score `22.67` across 5 fixtures. Case scores were `monthly_fixed=40.0`, `period_tiered=20.0`, `conditional_bonus=20.0`, `combination_rules=16.67`, and `error_candidate=16.67`.
+- v1 error frequencies: `value_mismatch=10`, `missing_field=5`, `missing_evidence=4`, and `missing_combination_rule=2`.
+- Representative v1 failures: empty `policy_id` and `policy_name`, unstable support/rule IDs, unsupported schema aliases, incorrect nested structure for tiered and conditional bonus items, and non-exact evidence snippets with fixture labels.
+- Added `prompts/policy_extraction_v2.md` while preserving `prompts/policy_extraction_v1.md`.
+- v2 prompt changes: explicit fixture ID conventions, canonical field names, alias bans, exact evidence rules, one-item nesting for `period_tiered` and `conditional_bonus`, and strict `combination_rules` structure.
+- v2 evaluation command attempted: `python scripts\run_policy_extraction_llm_eval.py --prompt-path prompts\policy_extraction_v2.md --prompt-version policy_extraction_v2 --output-dir output\policy_extraction_eval\v2-run`.
+- v2 evaluation result: failed before model execution because `OPENAI_API_KEY` is not configured in the current shell. The failure was recorded at `output/policy_extraction_eval/v2-run/model-comparison-report.json`.
+- Comparison reports written: `output/policy_extraction_eval/prompt-v1-v2-comparison-report.json` and `output/policy_extraction_eval/prompt-v1-v2-comparison-report.md`.
+- Remaining issue: v2 average score, policy score deltas, and error-type decreases require rerunning the same five fixtures with `OPENAI_API_KEY` configured.
+
+## 2026-06-14 LLM Extraction Repeated Evaluation Summary
+
+- Scope: added only repeated live LLM policy extraction evaluation and comparison reporting. No recommendation engine, Rule Engine, API behavior, DB schema, frontend UI, evaluator criteria, expected fixtures, candidate auto-correction, or approval state logic was changed.
+- Read first: `AGENTS.md` and `tasks/progress.md`.
+- Updated `scripts/run_policy_extraction_llm_eval.py`.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_policy_extraction_llm_eval.py`.
+- Added `--runs` so the same prompt can be executed multiple times and each run is saved under a separate run_id directory.
+- Added automatic prompt path resolution: `--prompt-version policy_extraction_v2` resolves to `prompts/policy_extraction_v2.md` when `--prompt-path` is not provided.
+- Kept explicit `--prompt-path` as the highest-priority prompt selector.
+- Added `prompt_file` and `prompt_sha256` to run reports and summary reports.
+- Added summary aggregation for average, minimum, and maximum run scores; policy-level score spread; and repeated error-type counts.
+- New output structure: `output/policy_extraction_eval/{prompt_version}/{run_id}/`, `output/policy_extraction_eval/{prompt_version}/summary-report.json`, and `output/policy_extraction_eval/{prompt_version}/summary-report.md`.
+- Unit test result: `python match_agent_v0.8\match_agent_v0.8\test_policy_extraction_llm_eval.py` passed.
+- Repeated evaluation command attempted: `python scripts\run_policy_extraction_llm_eval.py --prompt-version policy_extraction_v2 --runs 3`.
+- Repeated evaluation result in this shell: blocked before model execution because `OPENAI_API_KEY` is not configured. The error summary still recorded `prompt_file`, `prompt_sha256`, and `runs=3` at `output/policy_extraction_eval/policy_extraction_v2/summary-report.json`.
+- Remaining issue: actual repeated score statistics require rerunning with `OPENAI_API_KEY` configured.
+
+## 2026-06-14 Real Policy Extraction Evaluation Dataset Structure
+
+- Scope: added only the dataset structure and runner selection path for real policy-source LLM extraction evaluation. No recommendation engine, Rule Engine, API behavior, DB schema, frontend UI, evaluator criteria, mock fixtures, candidate auto-correction, Supabase storage, or approval state logic was changed.
+- Read first: `AGENTS.md`, `docs/POLICY_SCHEMA.md`, and `tasks/progress.md`.
+- Added `data/policy_extraction_real_eval/README.md`.
+- Added real evaluation dataset directories: `data/policy_extraction_real_eval/raw_text/`, `data/policy_extraction_real_eval/gold/`, and `data/policy_extraction_real_eval/metadata/`.
+- Dataset convention: each case uses matching file stems across `raw_text/{case_id}.txt`, `gold/{case_id}.json`, and `metadata/{case_id}.json`.
+- Metadata required fields: `case_id`, `policy_name`, `source_url`, `source_type`, `collected_at`, and `notes`.
+- Updated `scripts/run_policy_extraction_llm_eval.py` with `--dataset` support.
+- Real dataset output defaults to `output/policy_extraction_real_eval/{prompt_version}/`, keeping it separate from mock fixture reports.
+- The runner validates dataset structure, missing gold JSON, missing metadata JSON, required metadata fields, and metadata `case_id` before any OpenAI call.
+- Existing mock fixture evaluation remains available through the existing default path and `--fixture-dir`.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_policy_extraction_llm_eval.py` with dataset matching and missing-file validation coverage.
+- Updated docs: `docs/DEVELOPMENT_SETUP.md` and `docs/TEST_SCENARIOS.md`.
+- Updated `tasks/feature_list.json` by adding only `real-policy-extraction-evaluation-dataset` as `passing` after verification passed.
+- Unit test result: `python match_agent_v0.8\match_agent_v0.8\test_policy_extraction_llm_eval.py` passed.
+- Existing mock evaluation regression: `python scripts\run_policy_extraction_eval.py` passed with 5 cases and average score `89.47`.
+- Real dataset command attempted: `python scripts\run_policy_extraction_llm_eval.py --dataset data\policy_extraction_real_eval --prompt-version policy_extraction_v2 --runs 5`.
+- Real dataset command result: returned a clear dataset validation error because no real raw text files have been added yet. The error summary was written to `output/policy_extraction_real_eval/policy_extraction_v2/summary-report.json`.
+- Remaining issue: add five actual policy source text files, matching human-written gold JSON files, and metadata JSON files before running live real-policy evaluation.
+
+## 2026-06-14 DB Builder Policy Document Extraction Bridge
+
+- Scope: connected documents collected by the existing `db_builder.py` storage structure to the existing live LLM policy extraction adapter only. No db_builder collection flow, analyzer, file_parser, mapping, writer_final, recommendation engine, API, DB schema, frontend, Supabase storage, approved promotion, candidate auto-correction, or evaluator criteria was changed.
+- Read first: `AGENTS.md`, `model_설명.txt`, `docs/POLICY_SCHEMA.md`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Existing structure analysis: `config.py` defines `INCENT_DOCS_ROOT = match_agent_v0.8/match_agent_v0.8/incent_docs` and maps each `incent_key` to `incent_docs/{incent_key}_docs`.
+- Existing `db_builder.py` crawl output: URL collection writes `{incent_key}_raw.txt` and `{incent_key}_meta.json`; meta JSON includes `incent_key`, `url`, `crawled_at`, and `content`.
+- Existing manual-document behavior: `load_incent_text()` reads files already present in each docs folder and supports pdf, txt, and json; URL `"none"` requires manual files.
+- Current `incent_docs` scan result: 12 readable policy documents were found, including crawled raw text files and `incent_field.pdf`.
+- Added `match_agent_v0.8/match_agent_v0.8/services/db_builder_policy_document_loader.py`.
+- Added `scripts/run_policy_extraction_from_db_builder.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_db_builder_policy_document_loader.py`.
+- Supported input file formats: `.txt`, `.md`, `.json`, `.pdf`, and `.docx`.
+- JSON extraction rule: use `content` when present; otherwise serialize the JSON object as source text.
+- PDF extraction rule: reuse PyMuPDF text extraction, matching the existing `db_builder.py` dependency.
+- DOCX extraction rule: read `word/document.xml` from the docx zip and extract paragraph text with the Python standard library.
+- Source metadata rule: sidecar `{stem}_meta.json` or `{incent_key}_meta.json` supplies `url` or `source_url`; sidecar meta files are skipped as standalone extraction documents.
+- Candidate source-linking fields: `source_document_id`, `source_url`, and `source_file`.
+- Review-status handling: the loader attaches source fields without changing the candidate review status. The script records `invalid_review_status` if a generated candidate is not `needs_review`.
+- Output path: `output/policy_extraction_from_db_builder/{document_id}.json`.
+- Execution command: `python scripts\run_policy_extraction_from_db_builder.py`.
+- Optional single-document command: `python scripts\run_policy_extraction_from_db_builder.py --document-id parental_leave_reduction_support`.
+- Unit test result: `python match_agent_v0.8\match_agent_v0.8\test_db_builder_policy_document_loader.py` passed.
+- Script no-key check: `python scripts\run_policy_extraction_from_db_builder.py --document-id parental_leave_reduction_support` returned a clear `OPENAI_API_KEY` required error without printing a key.
+- Updated `tasks/feature_list.json` by adding only `db-builder-policy-document-extraction-bridge` as `passing` after verification passed.
+- Remaining issue: actual LLM extraction from db_builder documents requires `OPENAI_API_KEY`; legacy `.doc` binary Word files are not supported.
+
+## 2026-06-14 DB Builder LLM Candidate Validation Gate
+
+- Scope: added only a schema validation gate for parsed LLM candidates produced from db_builder policy documents. No recommendation engine, API behavior, DB schema, frontend, candidate auto-correction, approved promotion, or system ID injection was changed.
+- Read first: `AGENTS.md`, `model_설명.txt`, `docs/POLICY_SCHEMA.md`, and `tasks/progress.md`.
+- Added `match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py`.
+- Updated `scripts/run_policy_extraction_from_db_builder.py` so extraction output records include `candidate_validation_result` while preserving `parsed_candidate` unchanged.
+- Validation rules include missing `policy_id`, missing `policy_name`, `review_status != needs_review`, missing `support_item_id`, unsupported `calculation_type`, invalid `monthly_fixed` amount/duration fields, empty evidence, evidence not found as a raw-text substring, `UNKNOWN_POLICY_ID`, empty `target_policy_ids`, duplicate `condition_id`, duplicate `support_item_id`, duplicate `rule_id`, invalid `unresolved_rules`, and unsupported fields.
+- Current v3 db_builder candidate check: `output/policy_extraction_from_db_builder/childcare_flexible_start_support.json` failed validation with `missing_policy_id`, `evidence_not_in_raw_text`, `missing_calculation_type`, and `unknown_policy_id`.
+- Unit test result: `python test_policy_extraction_candidate_validator.py` passed.
+- Full verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode full` passed with 319 Python tests and frontend build.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for existing touched text files.
+- Remaining issue: current v3 extraction still needs prompt/schema cleanup or human review before it can be considered structurally acceptable; validator intentionally does not inject a policy id from `incent_key`.
+
+## 2026-06-14 Stage 1 - Candidate Assembler and Policy Extraction v4 Prompt
+
+- Scope: implemented Stage 1 from `docs/incentdoc_backend_llm_roadmap.md` only. No frontend, analyzer, file_parser, mapping, writer_final, recommendation API contract, calculation formula, DB schema, migration, Supabase save, auto-approval, or LLM candidate auto-correction was changed.
+- Read first: `AGENTS.md`, `model_설명.txt`, all files under `docs/`, `tasks/feature_list.json`, and `tasks/progress.md`.
+- Added `match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_assembler.py`.
+- Added `match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_assembler.py`.
+- Updated `match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py` so evidence comparison allows whitespace and line-break differences without changing the original `evidence_snippets` value.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py` with whitespace-normalized evidence comparison coverage.
+- Updated `scripts/run_policy_extraction_from_db_builder.py` to keep `parsed_candidate` as the raw LLM candidate, create a separate `assembled_candidate`, validate the assembled candidate, and default future db_builder extraction runs to `policy_extraction_v4`.
+- Added `prompts/policy_extraction_v4.md` with stricter rules for mandatory `calculation_type`, no `UNKNOWN_POLICY_ID`, ambiguous target policies as `unresolved_rules`, no support item duplication, source-owned versus system-owned metadata separation, and `needs_review` preservation.
+- Existing code reused: `services/db_builder_policy_document_loader.py`, `services/openai_policy_extraction_adapter.py`, `services/policy_extraction_adapter.py`, and the existing validation gate.
+- Current v3 assembled candidate check: `missing_policy_id` is resolved by `incent_key` assembly, but the stored v3 output still reports `evidence_not_in_raw_text`, `missing_calculation_type`, and `unknown_policy_id`.
+- Unit test result: `python test_policy_extraction_candidate_assembler.py` passed.
+- Unit test result: `python test_policy_extraction_candidate_validator.py` passed.
+- Full verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode full` passed with 326 Python tests and frontend build.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for existing touched text files.
+- Remaining issue: `OPENAI_API_KEY` is not configured in this shell, so `python scripts\run_policy_extraction_from_db_builder.py --document-id childcare_flexible_start_support --prompt-path prompts\policy_extraction_v4.md --prompt-version policy_extraction_v4` cannot run. It exits with a clear `OPENAI_API_KEY is required` error and prints no key.
+- Next Stage status: blocked. Stage 2 was not started because Stage 1's v4 live extraction completion check cannot be verified without `OPENAI_API_KEY`.
+
+## 2026-06-14 Parental Leave Employer Support Scope
+
+- Scope: narrowed future development and LLM extraction execution to employer subsidies directly related to parental leave and childcare working-time support. No db_builder document loading behavior, prompt schema, validator schema, assembler structure, recommendation formulas, Rule Engine behavior, DB schema, frontend, analyzer, file_parser, mapping, or writer_final code was changed.
+- Included document IDs for LLM extraction execution: `childcare_flexible_start_support`, `parental_leave_reduction_support`, `replacement_workshare_support`, and `working_hours_reduction_support`.
+- Excluded from analysis and LLM extraction execution: `elders_employ_incent`, `youth_hire_incent`, `employ_promo_incent`, `perm_conv_incent`, `flexible_work_incent`, `flexible_work_system_support`, and `worklife_balance_45_support`.
+- Explicit decision: do not add 고령자 고용지원금 calculation types or Rule Engine extensions.
+- Updated `scripts/run_policy_extraction_from_db_builder.py` so `load_policy_documents(...)` may still load all db_builder documents, but the extraction runner filters to parental-leave-related document IDs before any OpenAI adapter call.
+- Added `match_agent_v0.8/match_agent_v0.8/test_db_builder_policy_scope_filter.py` to lock the included and excluded policy document IDs.
+- Updated `tasks/feature_list.json` with `parental-leave-employer-support-scope` as `passing` after verification.
+- Unit test result: `python test_db_builder_policy_scope_filter.py` passed.
+- Full verification result: `powershell -ExecutionPolicy Bypass -File scripts\verify.ps1 -Mode full` passed with 329 Python tests and frontend build.
+- Git check: `git diff --check` passed; Git reported only CRLF conversion warnings for existing touched text files.
+- Remaining issue: future prompt, validator, assembler, candidate storage, and recommendation work should optimize for parental leave employer subsidy combinations first.
+
+## 2026-06-14 Childcare-Related Policy Scope Update and v5 Extraction Output Guard
+
+- Scope update: expanded the LLM extraction execution scope from four directly parental-leave-related documents to seven childcare-related employer subsidy documents.
+- Included document IDs: `parental_leave_reduction_support`, `replacement_workshare_support`, `worklife_balance_45_support`, `childcare_flexible_start_support`, `working_hours_reduction_support`, `flexible_work_incent`, and `flexible_work_system_support`.
+- Excluded document IDs: `elders_employ_incent`, `youth_hire_incent`, `employ_promo_incent`, and `perm_conv_incent`.
+- Updated `scripts/run_policy_extraction_from_db_builder.py` so the OpenAI extraction runner filters to the seven included childcare-related policy document IDs.
+- Updated `match_agent_v0.8/match_agent_v0.8/test_db_builder_policy_scope_filter.py` and added root-level `test_db_builder_policy_scope_filter.py` so `python test_db_builder_policy_scope_filter.py` runs from the project root.
+- Updated `prompts/policy_extraction_v5.md` to forbid non-calculation output fields: `application_process`, `application_steps`, `required_documents`, `contact_info`, `faq`, and `qna`.
+- v5 extraction focus now remains on subsidy amount calculation, eligibility conditions, duplicate-benefit/combination rules, and monthly exclusion rules only.
+- Unit test result: `python test_db_builder_policy_scope_filter.py` passed.
+- LLM extraction result: `python scripts\run_policy_extraction_from_db_builder.py --document-id childcare_flexible_start_support --prompt-path prompts\policy_extraction_v5.md --prompt-version policy_extraction_v5` passed; candidate validation passed with `error_count=0` and no forbidden non-calculation fields.
+- LLM extraction result: `python scripts\run_policy_extraction_from_db_builder.py --document-id working_hours_reduction_support --prompt-path prompts\policy_extraction_v5.md --prompt-version policy_extraction_v5` passed; candidate validation passed with `error_count=0` and no forbidden non-calculation fields.
+
+## 2026-06-14 Mock Company 20-Case Expected Draft Inventory
+
+- Scope: expanded mock company recommendation validation preparation from the existing Hana Machine case to all 20 mock company upload folders. No DB write, policy JSON source mutation, approval automation, recommendation engine logic change, or frontend change was performed.
+- Added `scripts/build_mock_company_expected_cases.py`.
+- The script scans `data/가상기업데이터_20개`, checks `기업특징.txt`, `사업자등록증.pdf`, and `직원명단.xlsx`, parses draft target policy and expected status from `기업특징.txt`, reads employee/leave/replacement fields from `직원명단.xlsx`, and writes expected-result draft fixtures under `tests/fixtures/mock_company_cases/`.
+- Existing `tests/fixtures/mock_company_cases/04_hana_machine_expected.json` is preserved and not overwritten.
+- Generated inventory: `output/mock_company_case_checks/mock_company_expected_case_inventory.json`.
+- Updated `tasks/mock_company_test_plan.md` with the 20-case inventory summary.
+- Execution result: `python scripts\build_mock_company_expected_cases.py` passed.
+- Total company folders: 20.
+- Expected-result draft generation success: 20.
+- Hold count: 0.
+- Policy case counts: `parental_leave_reduction_support=10`, `replacement_workshare_support=10`.
+- Expected status counts: `eligible=10`, `ineligible=10`.
+- Missing field top 5: `company.is_priority_support_enterprise=20`, `employee.child_age=10`, `employee.child_age_months=10`, `employee.child_school_grade=10`, `replacement_worker.hire_date=1`.
+- High actual-vs-expected comparability cases: `mock_company_06`, `mock_company_07`, `mock_company_08`, `mock_company_09`, `mock_company_10`, `mock_company_17`, `mock_company_18`, `mock_company_19`, and `04_hana_machine`.
+- Rule input expansion still needed for parental leave / working-hour reduction cases: preserve `company.is_priority_support_enterprise` and `leave_event.duration_days` for direct expected comparison.
+- JSON validation check: all 20 `*_expected.json` fixtures and the inventory JSON parsed successfully.
+- Git check: `git diff --check` passed with CRLF warnings only.
+
+## 2026-06-14 Batch Actual-vs-Expected Runner
+
+- Scope: added batch actual-vs-expected runner for high-comparability mock company cases only. No DB write, no approved auto-processing, no policy JSON source mutation, no frontend change, no recommendation engine logic modification.
+- Read first: `AGENTS.md`, `tasks/mock_company_test_plan.md`, `output/mock_company_case_checks/mock_company_expected_case_inventory.json`.
+- Created `scripts/run_batch_actual_vs_expected.py` for batch execution of 9 high-comparability cases targeting `replacement_workshare_support`.
+- Extended `scripts/run_mock_company_expected_check.py` with `argparse` CLI support for `--case` and `--output` arguments, preserving backward compatibility with default 04_hana_machine case.
+- Batch scope: 9 cases (`mock_company_06`–`mock_company_10`, `mock_company_17`–`mock_company_19`, `04_hana_machine`). All use test fixture `hana_machine_replacement_workshare` injected via `load_approved_policies` monkey-patch.
+- 고령자/청년/고용촉진/정규직전환 policies are excluded.
+- Batch execution result: `python scripts/run_batch_actual_vs_expected.py` completed with 0 errors.
+- Summary: 5/9 passed, 4 failed, all 9 comparable (target policy found in output).
+- Passed cases: `mock_company_06` (eligible), `mock_company_08` (eligible), `mock_company_10` (eligible), `mock_company_19` (ineligible), `04_hana_machine` (ineligible).
+- Failed cases:
+  - `mock_company_07`: expected eligible, actual ineligible. Possible condition boundary mismatch in expected-result draft.
+  - `mock_company_09`: expected eligible, actual ineligible. Possible condition boundary mismatch in expected-result draft.
+  - `mock_company_17`: expected ineligible with `replacement_worker_employment_duration_under_30_days`, actual ineligible with different reason code. Eligibility correct but reason-code mismatch.
+  - `mock_company_18`: expected ineligible with `replacement_worker_employment_duration_under_30_days`, actual ineligible with different reason code. Eligibility correct but reason-code mismatch.
+- Outputs written: `output/mock_company_case_checks/mock_company_batch_actual_vs_expected.json` and `output/mock_company_case_checks/mock_company_batch_summary.md`.
+- Updated `tasks/mock_company_test_plan.md` with batch runner section, batch results table, and failure analysis.

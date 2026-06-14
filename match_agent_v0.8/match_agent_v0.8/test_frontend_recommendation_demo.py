@@ -38,6 +38,17 @@ def test_mock_adapter_contains_valid_and_rejected_combinations():
     assert "requires" in adapter_source
 
 
+def test_service_can_select_api_adapter_without_removing_mock():
+
+    service_source = read_frontend_file(
+        "services/recommendationService.js"
+    )
+
+    assert "VITE_RECOMMENDATION_ADAPTER" in service_source
+    assert "fetchApiRecommendationDemo" in service_source
+    assert "fetchMockRecommendationDemo" in service_source
+
+
 def test_demo_displays_null_amount_as_not_calculable():
 
     app_source = read_frontend_file(
@@ -80,6 +91,7 @@ if __name__ == "__main__":
 
     test_recommendation_demo_uses_service_layer()
     test_mock_adapter_contains_valid_and_rejected_combinations()
+    test_service_can_select_api_adapter_without_removing_mock()
     test_demo_displays_null_amount_as_not_calculable()
     test_evidence_snippets_are_exposed_in_demo_detail()
     test_forbidden_best_recommendation_phrase_is_not_rendered()

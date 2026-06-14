@@ -18,6 +18,47 @@ The script is expected to check required harness files, validate task JSON, and 
 - A policy amount field stays null when the source does not provide an amount.
 - A policy duplicate rule stays `needs_review` when the source does not state compatibility.
 
+## Policy Extraction Evaluation Scenarios
+
+- The evaluator compares source text fixtures, human-written expected policy JSON, and assumed LLM candidate JSON without calling a live LLM API.
+- Candidate JSON fixtures must stay `review_status = needs_review`.
+- A complete candidate scores `100`.
+- Missing conditions return `missing_condition`.
+- Operator differences return `operator_mismatch`.
+- Amount differences return `amount_mismatch`.
+- Duration differences return `duration_mismatch`.
+- Tier differences return `tier_mismatch`.
+- Missing evidence returns `missing_evidence`.
+- Missing combination rules return `missing_combination_rule`.
+- A candidate with `review_status = approved` returns `invalid_review_status`.
+- Array order differences alone are allowed.
+- Conditions are compared by `condition_id`.
+- Tiers are compared by `start_month` and `end_month`.
+- Combination rules are compared by `rule_id`.
+- Evidence snippets are compared as exact source-backed strings.
+- The evaluator writes JSON and Markdown reports to `output/policy_extraction_eval/`.
+- The evaluator does not change recommendation logic, Rule Engine logic, API behavior, DB schema, frontend UI, or candidate review status.
+- The live LLM extraction batch runner requires `OPENAI_API_KEY`; if absent, it exits with a clear error and does not print the key.
+- The live LLM extraction batch runner uses `POLICY_EXTRACTION_MODEL` and `POLICY_EXTRACTION_PROMPT_VERSION` when provided.
+- The OpenAI adapter records `raw_response`, `parsed_candidate`, `parse_error`, `elapsed_ms`, and `token_usage`.
+- JSON parse success and failure are both represented in per-case output records.
+- Generated candidates are stored under `output/policy_extraction_eval/generated/` and are not saved to DB.
+- Generated candidates are evaluated with the existing `policy_structure_evaluator`.
+- If a generated candidate has `review_status = approved`, evaluation reports `invalid_review_status`; the runner does not correct it.
+- The live LLM extraction runner supports repeated execution with `--runs`.
+- If only `--prompt-version` is provided, the runner loads `prompts/{prompt_version}.md`.
+- If `--prompt-path` is provided, that explicit path takes priority over prompt-version lookup.
+- Run reports and summary reports record `prompt_file` and `prompt_sha256`.
+- Repeated reports are stored under run_id-specific directories instead of overwriting previous run output.
+- Summary reports include average, minimum, and maximum run scores, policy-level score spread, and repeated error-type counts.
+- The real policy-source evaluation dataset uses `raw_text/`, `gold/`, and `metadata/` subdirectories.
+- Real dataset raw text and gold JSON files must match by `case_id` file stem.
+- Missing gold JSON returns a clear dataset validation error.
+- Missing metadata JSON returns a clear dataset validation error.
+- Metadata must include `case_id`, `policy_name`, `source_url`, `source_type`, `collected_at`, and `notes`.
+- Real policy dataset reports are stored separately under `output/policy_extraction_real_eval/`.
+- Real dataset generated candidates are not saved to Supabase, auto-approved, or auto-corrected.
+
 ## Rule Engine Scenarios
 
 - Eligible employee passes all supported conditions.
@@ -122,6 +163,23 @@ The script is expected to check required harness files, validate task JSON, and 
 - Acceptance scenario `employer_net_cost` uses test-only policies and explicit `employer_cost_items`.
 - Acceptance verifies `total_subsidy_amount`, `total_employer_cost`, `net_employer_cost`, and applied cost item IDs for each summarized combination.
 
+## Employer Net Cost Optimal Combination Selection Scenarios
+
+- A single cost-calculated combination is selected as rank 1.
+- Among multiple candidates, the combination with the lowest `net_employer_cost` is selected.
+- A higher total subsidy amount is not selected when its `net_employer_cost` is higher.
+- If `net_employer_cost` is tied, the higher `total_subsidy_amount` is selected.
+- If `net_employer_cost` and `total_subsidy_amount` are tied, the combination with fewer policies is selected.
+- If all major values are tied, lexicographic `policy_ids` string order is used.
+- Negative `net_employer_cost` combinations remain valid candidates.
+- Empty candidates return a structured `no_recommendation_candidates` error.
+- Candidates with null `net_employer_cost`, null `total_subsidy_amount`, or missing/empty `policy_ids` are excluded with structured errors.
+- Duplicate `policy_ids` combinations return structured errors and are not merged.
+- `rejected_combinations` are preserved for auditability but are not recommendation candidates.
+- Recommendation reasons are fixed code-based strings; no LLM explanation is generated.
+- Selection reuses existing `calculation_steps` and `evidence_snippets` without recalculating amounts or costs.
+- Acceptance scenario `optimal_combination` verifies that the lowest net-cost combination is selected even when another combination has a higher total subsidy amount.
+
 ## General Company Recommendation Demo Scenarios
 
 - The demo screen is reachable at `/company/recommendation-demo` in the React/Vite app.
@@ -144,6 +202,7 @@ The script is expected to check required harness files, validate task JSON, and 
 - `conflict`: include mutually exclusive approved test-only policies; expect two valid single-policy combinations and one rejected pair with `mutually_exclusive`.
 - `requires`: include a dependent approved test-only policy without its required policy; expect no summarized valid combinations and one rejected combination with `requires`.
 - `employer_net_cost`: pass explicit cost items to the existing employer net-cost calculator after combination amount summarization; expect three cost-calculated combinations with total employer costs `[1000, 1700, 2200]` and net employer costs `[600, 1380, 1480]`.
+- `optimal_combination`: pass explicit cost items through employer net-cost calculation, then select the lowest net-cost combination; expect `["smoke-optimal-a"]` to be recommended even though `["smoke-optimal-a", "smoke-optimal-b"]` has the highest total subsidy amount.
 - Every acceptance scenario must compare expected and actual valid combination count, rejected combination count, policy IDs, rejected policy IDs, amount totals, and rejection/error codes.
 - Every acceptance scenario must verify that evidence snippets and calculation steps are present in calculated or rejected outputs.
 - Acceptance fixtures are test-only data and must not be treated as real policy source data.
@@ -160,6 +219,57 @@ The script is expected to check required harness files, validate task JSON, and 
 - Verify the screen does not contain `최적 추천` or `가장 유리한 조합`.
 - Save a screenshot to `output/verification/frontend-screenshot.png`.
 - On failure, preserve Playwright screenshot and trace artifacts.
+
+## Demo Recommendation API Integration Scenarios
+
+- FastAPI app object exists at `match_agent_v0.8/match_agent_v0.8/api_server.py` as `app`.
+- `GET /health` returns HTTP 200 with `{"status": "ok"}`.
+- Swagger UI is available through FastAPI at `/docs`.
+- CORS allows only local Vite dev origins `http://127.0.0.1:5173` and `http://localhost:5173`.
+- `POST /api/demo/recommendations/calculate` validates that `company`, `employee`, and `leave_event` are objects.
+- Missing or empty `employer_cost_items` is accepted and treated as an explicit empty list.
+- Missing `policy_source` defaults to `demo_fixture`.
+- `policy_source` accepts only `demo_fixture` and `policy_db`; other values return `unsupported_policy_source`.
+- The API loads policies through the approved policy loader.
+- The approved policy loader supports the test-only `optimal_combination` demo fixture source.
+- The approved policy loader supports `policy_db` when `INCENTDOC_POLICY_DB_URL` points to a test PostgreSQL database.
+- When the API request uses `policy_source=policy_db`, orchestration calls the existing `policy_db` loader path.
+- The approved policy loader returns only policies with `review_status == "approved"`.
+- `policy_db` returns only rows where `review_status = approved` and `is_active = true`.
+- `policy_db` excludes `needs_review`, `deprecated`, and inactive policies.
+- `policy_db` returns `approved_policy_not_found` when no approved active policy exists.
+- `policy_db` returns `policy_db_connection_failed` when the DB URL is missing or the connection cannot be opened.
+- `policy_db` returns `policy_db_table_not_found` when `subsidy_policies` does not exist.
+- `policy_db` returns `policy_db_invalid_json` when `policy_json` is not a JSON object.
+- `policy_db` returns `policy_db_review_status_mismatch` when DB column `review_status` and `policy_json.review_status` differ.
+- API `policy_db` loader errors are returned to the caller and must not fall back to `demo_fixture`.
+- Unsupported policy sources return a structured `unsupported_policy_source` error.
+- Missing demo fixtures return a structured `demo_fixture_not_found` error.
+- The API calls the existing calculation, standardization, combination generation, amount summarization, employer net-cost, and optimal-combination selector services in sequence.
+- The API returns `recommended_combination`, `alternative_combinations`, `rejected_combinations`, `errors`, and `meta`.
+- `meta.data_source`, `meta.is_demo`, `meta.policy_source`, and `meta.loaded_policy_count` identify the active data boundary.
+- `demo_fixture` responses use `meta.data_source = demo_fixture` and `meta.is_demo = true`.
+- `policy_db` responses use `meta.data_source = policy_db` and include the loaded approved active policy count.
+- The recommended combination is selected by lowest `net_employer_cost`, even when another combination has a higher total subsidy amount.
+- The API adapter posts browser input to `/api/demo/recommendations/calculate`.
+- The API adapter sends `policy_source` using `VITE_RECOMMENDATION_POLICY_SOURCE` or the default `demo_fixture`.
+- The API adapter maps API results into the existing demo screen result shape without duplicating calculation logic.
+- The recommendation service defaults to the mock adapter unless `VITE_RECOMMENDATION_ADAPTER=api` is set.
+- The demo screen displays `데모 정책 데이터 기준 결과입니다.` for `demo_fixture` and `Supabase 테스트 정책 DB 기준 결과입니다.` for `policy_db`.
+- Mock adapter behavior remains available and unchanged for default demo verification.
+- API adapter mode can be verified by running the demo API server and Playwright E2E with `VITE_RECOMMENDATION_ADAPTER=api`.
+
+## Rule Engine Domain Adapter Scenarios
+
+- General-company API payload maps to `rule_input.company.size`, `rule_input.company.has_replacement_worker`, and `rule_input.employee.leave_type`.
+- `leave_event.leave_type` overrides `employee.leave_type`.
+- `leave_event.has_replacement_worker` overrides `company.has_replacement_worker`.
+- Explicit positive `leave_event.requested_months` is used when provided.
+- Missing leave dates use the current demo default requested months.
+- Inclusive start/end leave dates produce the requested month count.
+- End date before start date returns a structured error.
+- Non-positive explicit requested months return a structured error.
+- The adapter does not evaluate eligibility, calculate amounts, generate combinations, calculate costs, or select recommendations.
 
 ## General Company MVP Scenarios
 

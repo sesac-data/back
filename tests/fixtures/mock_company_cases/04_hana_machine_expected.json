@@ -1,0 +1,233 @@
+{
+  "case_id": "04_hana_machine",
+  "fixture_notice": "TEST FIXTURE ONLY. This file defines expected recommendation-check behavior for one mock company upload case. It must not be saved to DB or treated as approved policy data.",
+  "source_folder": "C:\\Users\\laiep\\project_sesac\\data\\가상기업데이터_20개\\04_주식회사_하나기계",
+  "source_files": {
+    "company_features": "기업특징.txt",
+    "business_registration": "사업자등록증.pdf",
+    "employees": "직원명단.xlsx"
+  },
+  "extracted_fields": {
+    "company": {
+      "company_name": "(주)하나기계",
+      "business_registration_number": "659-88-57040",
+      "representative_name": "손예준",
+      "industry": "제조업 / 의료용 기기 제조업",
+      "industry_code": "27199",
+      "address": "부산광역시 해운대구 센텀중앙로 79, 센텀사이언스파크 11층 (우동)",
+      "insured_employee_count": 26,
+      "is_priority_support_enterprise": true,
+      "is_small_or_medium_company": true
+    },
+    "employee": {
+      "name": "오유진",
+      "department_role": "고객지원팀/CS",
+      "employment_type": "정규직",
+      "hire_date": "2021-10-28",
+      "leave_type": "parental_leave",
+      "leave_type_source_value": "육아휴직",
+      "salary_monthly": 5660000
+    },
+    "leave_event": {
+      "leave_type": "parental_leave",
+      "start_date": "2025-06-16",
+      "end_date": "2026-03-15",
+      "duration_days": 273,
+      "requested_months_for_current_adapter": 10,
+      "has_replacement_worker": true
+    },
+    "replacement_worker": {
+      "name": "김태경",
+      "department_role": "고객지원팀/CS(대체)",
+      "employment_type": "기간제",
+      "hire_date": "2025-01-05",
+      "work_start_date": "2025-01-05",
+      "work_end_date": "2026-03-15",
+      "employment_duration_days": 435,
+      "is_new_hire": true
+    },
+    "derived": {
+      "replacement_allowed_earliest_hire_date": "2025-04-16",
+      "replacement_hire_date_is_after_allowed_earliest_date": false
+    }
+  },
+  "recommendation_engine_input_draft": {
+    "policy_source": "demo_fixture",
+    "company": {
+      "name": "(주)하나기계",
+      "business_registration_number": "659-88-57040",
+      "size": "small",
+      "insured_employee_count": 26,
+      "is_priority_support_enterprise": true,
+      "is_small_or_medium_company": true,
+      "has_replacement_worker": true
+    },
+    "employee": {
+      "name": "오유진",
+      "department_role": "고객지원팀/CS",
+      "employment_type": "regular",
+      "hire_date": "2021-10-28",
+      "leave_type": "parental_leave",
+      "salary_monthly": 5660000
+    },
+    "leave_event": {
+      "leave_type": "parental_leave",
+      "start_date": "2025-06-16",
+      "end_date": "2026-03-15",
+      "requested_months": 10,
+      "duration_days": 273,
+      "has_replacement_worker": true
+    },
+    "replacement_worker": {
+      "name": "김태경",
+      "employment_type": "fixed_term",
+      "hire_date": "2025-01-05",
+      "work_start_date": "2025-01-05",
+      "work_end_date": "2026-03-15",
+      "employment_duration_days": 435,
+      "is_new_hire": true
+    },
+    "employer_cost_items": []
+  },
+  "field_mapping": {
+    "mapped_to_current_demo_api": [
+      "company.name",
+      "company.business_registration_number",
+      "company.size",
+      "company.has_replacement_worker",
+      "employee.name",
+      "employee.leave_type",
+      "leave_event.leave_type",
+      "leave_event.start_date",
+      "leave_event.end_date",
+      "leave_event.requested_months",
+      "leave_event.has_replacement_worker",
+      "employer_cost_items"
+    ],
+    "mapped_for_future_rule_engine_or_policy_db": [
+      "company.insured_employee_count",
+      "company.is_priority_support_enterprise",
+      "company.is_small_or_medium_company",
+      "employee.hire_date",
+      "employee.department_role",
+      "employee.salary_monthly",
+      "leave_event.duration_days",
+      "replacement_worker.name",
+      "replacement_worker.hire_date",
+      "replacement_worker.work_start_date",
+      "replacement_worker.work_end_date",
+      "replacement_worker.employment_duration_days",
+      "replacement_worker.is_new_hire"
+    ],
+    "missing_or_not_provided": [
+      "employee.child_age",
+      "employee.child_school_grade",
+      "employee.gender",
+      "employee.child_age_months",
+      "company.has_electronic_attendance_management",
+      "company.has_work_rules_for_reduction",
+      "company.has_contract_change",
+      "company.has_flexible_work_system",
+      "company.has_labor_management_agreement_for_worktime_reduction",
+      "company.has_worktime_reduction_plan_and_implementation",
+      "company.has_approved_business_plan",
+      "company.system_installation_date",
+      "company.usage_obligation_period",
+      "working_hour_reduction.before_weekly_hours",
+      "working_hour_reduction.after_weekly_hours",
+      "flexible_work.type",
+      "flexible_work.monthly_reduced_hours",
+      "flexible_work.daily_reduced_hours"
+    ]
+  },
+  "policy_verification_mapping": [
+    {
+      "policy_id": "parental_leave_reduction_support",
+      "case_relevance": "related",
+      "verification_status": "partially_evaluable",
+      "reason": "The case has parental leave dates and duration, but child age/months and detailed tier qualifiers are not available in the uploaded files."
+    },
+    {
+      "policy_id": "replacement_workshare_support",
+      "case_relevance": "target_policy",
+      "verification_status": "evaluable",
+      "expected_status": "ineligible",
+      "expected_reason_code": "replacement_worker_hired_before_allowed_window",
+      "reason": "The replacement worker hire date is 2025-01-05, earlier than 2025-04-16, which is two months before the parental leave start date."
+    },
+    {
+      "policy_id": "worklife_balance_45_support",
+      "case_relevance": "not_directly_related_to_case_event",
+      "verification_status": "not_evaluable",
+      "reason": "The upload does not provide company-wide worktime-reduction project, labor-management agreement, or implementation fields."
+    },
+    {
+      "policy_id": "childcare_flexible_start_support",
+      "case_relevance": "not_applicable",
+      "verification_status": "not_evaluable",
+      "reason": "The case is parental leave, not childcare 10 a.m. start or daily working-hour reduction."
+    },
+    {
+      "policy_id": "working_hours_reduction_support",
+      "case_relevance": "not_applicable",
+      "verification_status": "not_evaluable",
+      "reason": "The case is parental leave, not prescribed working-hour reduction."
+    },
+    {
+      "policy_id": "flexible_work_incent",
+      "case_relevance": "not_applicable",
+      "verification_status": "not_evaluable",
+      "reason": "The upload does not indicate flexible work such as staggered commute, remote work, or selective working hours."
+    },
+    {
+      "policy_id": "flexible_work_system_support",
+      "case_relevance": "not_applicable",
+      "verification_status": "not_evaluable",
+      "reason": "The upload does not include work-life balance system purchase, installation, approved business plan, or usage obligation fields."
+    }
+  ],
+  "expected_result": {
+    "primary_assertion": {
+      "policy_id": "replacement_workshare_support",
+      "expected_status": "ineligible",
+      "expected_reason_code": "replacement_worker_hired_before_allowed_window",
+      "expected_reason": "대체인력 채용일 2025-01-05가 육아휴직 시작일 2025-06-16의 2개월 전인 2025-04-16보다 이르므로 신규 대체인력 고용 요건을 충족하지 못한다."
+    },
+    "manual_calculation": {
+      "leave_start_date": "2025-06-16",
+      "replacement_allowed_earliest_hire_date": "2025-04-16",
+      "replacement_worker_hire_date": "2025-01-05",
+      "is_hire_date_valid_for_replacement_support": false,
+      "leave_duration_days": 273,
+      "leave_duration_days_meets_30_day_requirement": true,
+      "replacement_employment_duration_days": 435,
+      "replacement_employment_duration_meets_30_day_requirement": true
+    },
+    "expected_recommendation_comparison": {
+      "must_not_include_as_eligible_policy": [
+        "replacement_workshare_support"
+      ],
+      "expected_rejected_policy_ids": [
+        "replacement_workshare_support"
+      ],
+      "expected_rejected_reason_codes": [
+        "replacement_worker_hired_before_allowed_window"
+      ],
+      "amount_assertion": {
+        "replacement_workshare_support_expected_amount": 0,
+        "reason": "The target policy is ineligible before amount calculation because the replacement hire window condition fails."
+      }
+    }
+  },
+  "comparison_plan": {
+    "current_backend_gap": "The current general-company demo adapter only maps company.size, has_replacement_worker, employee.leave_type, and leave_event dates/months. It does not yet map replacement_worker.hire_date or evaluate the two-month replacement hire window.",
+    "recommended_next_test_step": "Use this fixture as an expected-result contract before adding a dedicated mock-company recommendation comparison runner or extending the rule input adapter for replacement_worker fields.",
+    "do_not_change_now": [
+      "recommendation_engine_logic",
+      "policy_schema",
+      "database",
+      "frontend",
+      "approval_state"
+    ]
+  }
+}

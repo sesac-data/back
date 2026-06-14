@@ -1,0 +1,79 @@
+{
+  "case_id": "monthly_fixed",
+  "case_name": "Monthly fixed extraction fixture",
+  "source_text": "TEST SOURCE: Small companies receive 100 per month for up to 6 months. Evidence must say small company and monthly 100.",
+  "expected_policy": {
+    "policy_id": "EVAL-MONTHLY",
+    "policy_name": "Eval Monthly Fixed Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "Small companies receive 100 per month for up to 6 months."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-MONTHLY",
+        "support_type": "monthly_fixed",
+        "conditions": [
+          {
+            "condition_id": "C-SMALL",
+            "field": "company.size",
+            "operator": "eq",
+            "expected": "small",
+            "evidence_snippets": [
+              "Small companies receive 100 per month for up to 6 months."
+            ]
+          }
+        ],
+        "support": {
+          "calculation_type": "monthly_fixed",
+          "monthly_amount": 100,
+          "max_months": 6,
+          "evidence_snippets": [
+            "Small companies receive 100 per month for up to 6 months."
+          ]
+        },
+        "evidence_snippets": [
+          "Small companies receive 100 per month for up to 6 months."
+        ]
+      }
+    ],
+    "combination_rules": []
+  },
+  "candidate_policy": {
+    "policy_id": "EVAL-MONTHLY",
+    "policy_name": "Eval Monthly Fixed Fixture",
+    "review_status": "needs_review",
+    "evidence_snippets": [
+      "Small companies receive 100 per month for up to 6 months."
+    ],
+    "support_items": [
+      {
+        "support_item_id": "SI-MONTHLY",
+        "support_type": "monthly_fixed",
+        "conditions": [
+          {
+            "condition_id": "C-SMALL",
+            "field": "company.size",
+            "operator": "eq",
+            "expected": "small",
+            "evidence_snippets": [
+              "Small companies receive 100 per month for up to 6 months."
+            ]
+          }
+        ],
+        "support": {
+          "calculation_type": "monthly_fixed",
+          "monthly_amount": 100,
+          "max_months": 6,
+          "evidence_snippets": [
+            "Small companies receive 100 per month for up to 6 months."
+          ]
+        },
+        "evidence_snippets": [
+          "Small companies receive 100 per month for up to 6 months."
+        ]
+      }
+    ],
+    "combination_rules": []
+  }
+}

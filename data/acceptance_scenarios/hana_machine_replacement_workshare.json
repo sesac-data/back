@@ -1,0 +1,75 @@
+{
+  "scenario": "hana_machine_replacement_workshare",
+  "fixture_notice": "TEST FIXTURE ONLY. This fixture exists only to compare mock company case 04 against replacement_workshare_support behavior. It is not real approved operating policy data.",
+  "candidate_policies": [
+    {
+      "policy_id": "replacement_workshare_support",
+      "policy_key": "replacement_workshare_support",
+      "policy_name": "대체인력 지원금 테스트 Fixture",
+      "review_status": "approved",
+      "evidence_snippets": [
+        "TEST FIXTURE evidence: replacement worker support policy."
+      ],
+      "support_items": [
+        {
+          "support_type": "monthly_fixed",
+          "conditions": [
+            {
+              "condition_id": "replacement-leave-type",
+              "field": "employee.leave_type",
+              "operator": "eq",
+              "expected": "parental_leave",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: parental leave is eligible for replacement worker support."
+              ]
+            },
+            {
+              "condition_id": "replacement-insured-count-tier",
+              "field": "company.insured_employee_count",
+              "operator": "lt",
+              "expected": 30,
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: fewer than 30 insured employees uses this tier."
+              ]
+            },
+            {
+              "condition_id": "replacement-employment-duration",
+              "field": "replacement_worker.employment_duration_days",
+              "operator": "gte",
+              "expected": 30,
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: replacement worker must be employed at least 30 days."
+              ]
+            },
+            {
+              "condition_id": "replacement-hire-window",
+              "field": "replacement_worker.hire_date",
+              "operator": "gte",
+              "expected": {
+                "type": "relative_date",
+                "source_field": "leave_event.start_date",
+                "months_before": 2
+              },
+              "reason_code": "replacement_worker_hired_before_allowed_window",
+              "evidence_snippets": [
+                "TEST FIXTURE evidence: replacement worker must be hired no earlier than two months before leave start."
+              ]
+            }
+          ],
+          "support": {
+            "calculation_type": "monthly_fixed",
+            "monthly_amount": 1400000,
+            "max_months": 12,
+            "evidence_snippets": [
+              "TEST FIXTURE evidence: replacement support tier pays 1400000 per month."
+            ]
+          },
+          "evidence_snippets": [
+            "TEST FIXTURE evidence: replacement worker support item."
+          ]
+        }
+      ],
+      "combination_rules": []
+    }
+  ]
+}

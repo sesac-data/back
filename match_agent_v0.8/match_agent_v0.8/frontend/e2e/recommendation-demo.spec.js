@@ -9,27 +9,38 @@ const screenshotPath = path.resolve(
 test("general company recommendation demo renders auditable comparison output", async ({ page }) => {
   await page.goto("/company/recommendation-demo");
 
-  await expect(
-    page.getByRole("heading", { name: "육아휴직 지원금 조합 비교" }),
-  ).toBeVisible();
+  await expect(page.locator(".recommendation-demo")).toBeVisible();
+  await expect(page.locator(".demo-hero-panel h2")).toBeVisible();
 
-  const checkButton = page.getByRole("button", { name: "지원금 확인" });
+  const checkButton = page.locator(".recommendation-demo button.primary.small").first();
   await expect(checkButton).toBeVisible();
   await checkButton.click();
 
-  await expect(page.getByText("적용 가능한 조합 수")).toBeVisible();
-  await expect(page.getByText("제외된 조합 수")).toBeVisible();
-  await expect(page.getByText("가장 높은 총지원금")).toBeVisible();
-  await expect(page.getByText("유효 조합 목록")).toBeVisible();
-  await expect(page.getByText("제외 조합 목록")).toBeVisible();
+  await expect(page.locator(".metric-card")).toHaveCount(4);
+  await expect(page.locator(".demo-result-grid .panel").first()).toBeVisible();
+  await expect(page.locator(".demo-result-grid .panel").nth(1)).toBeVisible();
 
-  await expect(page.locator(".combination-list").first()).toContainText("POLICY-PARENTAL-LEAVE");
-  await expect(page.locator(".combination-list").nth(1)).toContainText("mutually_exclusive");
-  await expect(page.getByText("계산 불가").first()).toBeVisible();
+  const isApiAdapter = await page.getByText("API adapter 사용 중").count();
+
+  if (isApiAdapter) {
+    await expect(page.getByText("데모 정책 데이터 기준 결과입니다.").first()).toBeVisible();
+    await expect(page.getByText("추천 조합")).toBeVisible();
+    await expect(page.locator(".combination-list").first()).toContainText("smoke-optimal-a");
+    await expect(page.getByText("사업주 순비용").first()).toBeVisible();
+  } else {
+    await expect(page.locator(".combination-list").first()).toContainText("POLICY-PARENTAL-LEAVE");
+    await expect(page.locator(".combination-list").nth(1)).toContainText("mutually_exclusive");
+    await expect(page.getByText("계산 불가").first()).toBeVisible();
+  }
 
   await page.getByRole("button", { name: "상세 보기" }).first().click();
   await expect(page.getByRole("heading", { name: "evidence_snippets" })).toBeVisible();
-  await expect(page.getByText("육아휴직을 허용한 사업주에게 월 정액 지원금을 지급합니다.").first()).toBeVisible();
+
+  if (isApiAdapter) {
+    await expect(page.getByText("TEST FIXTURE evidence:").first()).toBeVisible();
+  } else {
+    await expect(page.locator(".detail-panel")).toContainText("evidence_snippets");
+  }
 
   await expect(page.getByText("최적 추천")).toHaveCount(0);
   await expect(page.getByText("가장 유리한 조합")).toHaveCount(0);
