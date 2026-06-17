@@ -118,6 +118,37 @@ Adapter non-goals:
 - Do not generate combinations or recommendations.
 - Do not connect to the database.
 
+## Condition Groups (OR / AND)
+
+Flat conditions are combined with AND. Some policies state OR requirements such as `만 12세 이하 또는 초등학교 6학년 이하`. These are expressed as a condition group:
+
+```json
+{
+  "condition_group_id": "CG-001",
+  "mode": "or",
+  "conditions": [
+    {"condition_id": "C-AGE", "field": "employee.child_age", "operator": "lte", "expected": 12, "evidence_snippets": ["만 12세 이하"]},
+    {"condition_id": "C-GRADE", "field": "employee.child_school_grade", "operator": "lte", "expected": 6, "evidence_snippets": ["초등학교 6학년 이하"]}
+  ],
+  "evidence_snippets": ["만 12세 이하 또는 초등학교 6학년 이하"]
+}
+```
+
+`services/condition_evaluator.py` provides:
+
+- `evaluate_condition_group(input_data, group)`: an `or` group passes when any member passes; an `and` group passes when all members pass; empty groups and unsupported `mode` values do not pass.
+- `evaluate_conditions_with_groups(input_data, conditions)`: evaluates a list that may mix flat operator conditions and groups. Flat conditions keep AND semantics; each group is one AND unit at the top level. With no groups present, the result matches `evaluate_operator_conditions`.
+
+Member results are preserved in `member_results` for explainability. OR-group member failures are not reported as top-level `failed_conditions` because the group as a whole passed. The existing `evaluate_operator_conditions` is unchanged.
+
+## Monthly Wage Cap
+
+`services/calculation_service.py` provides `apply_monthly_wage_cap`, used by the `monthly_fixed` and `period_tiered` calculators. When a support item declares `monthly_cap_ratio`, the per-month amount is capped at `min(policy_monthly, wage * monthly_cap_ratio)` (wage read from `cap_field`, default `employee.monthly_wage`). A missing wage falls back to `ASSUMED_DEFAULT_MONTHLY_WAGE` with an `assumed_wage_used` step reason. Without `monthly_cap_ratio` the calculators are unchanged.
+
+## Monthly Exclusion (해당월 부지급)
+
+`services/calculation_service.py` provides `apply_monthly_exclusion`, used by the `monthly_fixed` calculator. When a support item declares `monthly_exclusion: true`, the engine reduces eligible months by a provided non-payable-month count (`excluded_months_field`, default `leave_event.excluded_months`): `adjusted = max(0, eligible_months - excluded_months)`. A missing count means 0 excluded (`no_exclusion_data` step reason); nothing is inferred. Without the marker the calculator is unchanged.
+
 ## Test Expectations
 
 Each condition type needs at least:

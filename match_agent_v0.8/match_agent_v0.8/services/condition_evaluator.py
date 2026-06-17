@@ -16,6 +16,28 @@ SUPPORTED_OPERATORS = {
 }
 
 
+# Legacy type-based condition types handled by evaluate_condition().
+# Keep this in sync with the branches in evaluate_condition(); the coverage
+# audit (scripts/audit_condition_type_coverage.py) compares policy JSON
+# condition types against this set to surface silently-unsupported types.
+SUPPORTED_CONDITION_TYPES = {
+    "child_age",
+    "weekly_work_hours",
+    "weekly_working_days",
+    "employee_count",
+    "company_size",
+    "requires_attendance_system",
+    "requires_groupware",
+    "requires_remote_work_system",
+    "requires_vpn",
+    "requires_video_conference",
+    "requires_contract_change",
+    "requires_labor_agreement",
+    "requires_replacement_worker",
+    "flexible_work_enabled",
+}
+
+
 MISSING = object()
 
 
@@ -400,6 +422,144 @@ def evaluate_operator_conditions(
 
         "failed_conditions":
             failed_conditions
+    }
+
+
+SUPPORTED_GROUP_MODES = {
+    "and",
+    "or",
+}
+
+
+def is_condition_group(
+    item: Any
+) -> bool:
+    """A condition group declares a mode/group id and nests member conditions."""
+
+    return (
+        isinstance(item, dict)
+        and "conditions" in item
+        and (
+            "condition_group_id" in item
+            or "mode" in item
+        )
+    )
+
+
+def evaluate_condition_group(
+    input_data: Dict,
+    group: Dict
+) -> Dict:
+    """Evaluate an and/or group. OR passes if any member passes; AND if all do."""
+
+    mode = group.get(
+        "mode"
+    )
+    members = group.get(
+        "conditions",
+        [],
+    )
+
+    member_results = [
+        evaluate_operator_condition(
+            input_data,
+            member,
+        )
+        for member in members
+    ]
+    passed_flags = [
+        result.get("reason") == "passed"
+        for result in member_results
+    ]
+
+    if mode not in SUPPORTED_GROUP_MODES:
+        passed = False
+        reason = "unsupported_group_mode"
+    elif not member_results:
+        passed = False
+        reason = "empty_condition_group"
+    elif mode == "or":
+        passed = any(passed_flags)
+        reason = "passed" if passed else "group_not_met"
+    else:
+        passed = all(passed_flags)
+        reason = "passed" if passed else "group_not_met"
+
+    return {
+        "condition_group_id":
+            group.get(
+                "condition_group_id"
+            ),
+        "mode":
+            mode,
+        "passed":
+            passed,
+        "reason":
+            reason,
+        "member_results":
+            member_results,
+        "evidence_snippets":
+            group.get(
+                "evidence_snippets",
+                [],
+            ),
+    }
+
+
+def evaluate_conditions_with_groups(
+    input_data: Dict,
+    conditions: List[Dict]
+) -> Dict:
+    """Evaluate a list that may mix flat operator conditions and and/or groups.
+
+    Flat conditions keep AND semantics. Each group is one AND unit at the top
+    level. With no groups present, the result matches evaluate_operator_conditions.
+    """
+
+    passed_conditions = []
+    failed_conditions = []
+    groups = []
+
+    for item in conditions:
+
+        if is_condition_group(item):
+
+            groups.append(
+                evaluate_condition_group(
+                    input_data,
+                    item,
+                )
+            )
+
+            continue
+
+        result = evaluate_operator_condition(
+            input_data,
+            item,
+        )
+
+        if result.get("reason") == "passed":
+            passed_conditions.append(result)
+        else:
+            failed_conditions.append(result)
+
+    eligible = (
+        not failed_conditions
+        and all(
+            group["passed"]
+            for group in groups
+        )
+    )
+
+    return {
+        "eligible":
+            eligible,
+        "passed_conditions":
+            passed_conditions,
+        "failed_conditions":
+            failed_conditions,
+        "groups":
+            groups,
     }
 
 

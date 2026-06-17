@@ -3,8 +3,11 @@
 from typing import Dict, List
 
 from services.condition_evaluator import (
+    MISSING,
+    evaluate_conditions_with_groups,
     evaluate_operator_conditions,
-    evaluate_policy_conditions
+    evaluate_policy_conditions,
+    get_nested_value
 )
 
 
@@ -13,6 +16,18 @@ REVIEW_STATUS_FIELD = "review_status"
 MONTHLY_FIXED = "monthly_fixed"
 PERIOD_TIERED = "period_tiered"
 CONDITIONAL_BONUS = "conditional_bonus"
+COST_SHARE = "cost_share"
+
+# Explicit, overridable assumption used only when a policy declares a per-wage
+# monthly cap but the actual wage is not provided in the input. The result then
+# records an "assumed_wage_used" warning step; no amount is silently fabricated.
+ASSUMED_DEFAULT_MONTHLY_WAGE = 3_000_000
+DEFAULT_WAGE_FIELD = "employee.monthly_wage"
+
+# Per-month exclusion ("해당월 부지급"): the count of non-payable months is a
+# provided input. We never infer which/how many months are excluded from
+# attendance data we do not have; a missing input means 0 excluded months.
+DEFAULT_EXCLUDED_MONTHS_FIELD = "leave_event.excluded_months"
 STANDARD_CALCULATION_RESULT_FIELDS = [
     "policy_id",
     "policy_name",
@@ -433,6 +448,33 @@ def collect_condition_evidence(
             )
         )
 
+    # Condition groups (OR/AND) carry their own evidence and member evidence.
+    for group in condition_result.get(
+        "groups",
+        []
+    ):
+
+        append_unique_evidence(
+            evidence,
+            group.get(
+                "evidence_snippets",
+                []
+            )
+        )
+
+        for member in group.get(
+            "member_results",
+            []
+        ):
+
+            append_unique_evidence(
+                evidence,
+                member.get(
+                    "evidence_snippets",
+                    []
+                )
+            )
+
     return evidence
 
 
@@ -561,7 +603,7 @@ def prepare_approved_calculation(
         []
     )
 
-    condition_result = evaluate_operator_conditions(
+    condition_result = evaluate_conditions_with_groups(
         rule_input,
         conditions
     )
@@ -668,6 +710,178 @@ def calculate_yearly_amount(
     return 0
 
 
+def apply_monthly_wage_cap(
+    monthly_amount,
+    support: Dict,
+    rule_input: Dict,
+    tier_index=None,
+):
+    """Cap a per-month amount at wage * monthly_cap_ratio.
+
+    Returns (effective_monthly_amount, cap_step or None). The cap is applied only
+    when the support declares a numeric monthly_cap_ratio; otherwise this is a
+    no-op so existing policies are unchanged. When the wage input is missing, an
+    explicit assumed wage is used and the step reason is "assumed_wage_used".
+    """
+
+    monthly_cap_ratio = support.get(
+        "monthly_cap_ratio"
+    )
+
+    if not _is_number(monthly_cap_ratio):
+
+        return monthly_amount, None
+
+    cap_field = support.get(
+        "cap_field",
+        DEFAULT_WAGE_FIELD
+    )
+
+    wage = get_nested_value(
+        rule_input,
+        cap_field
+    )
+
+    if wage is MISSING or not _is_number(wage):
+
+        wage_used = ASSUMED_DEFAULT_MONTHLY_WAGE
+        assumed_wage = True
+
+    else:
+
+        wage_used = wage
+        assumed_wage = False
+
+    cap_amount = int(
+        round(
+            wage_used
+            * monthly_cap_ratio
+        )
+    )
+
+    if not _is_number(monthly_amount):
+
+        effective_monthly_amount = monthly_amount
+
+    else:
+
+        effective_monthly_amount = min(
+            monthly_amount,
+            cap_amount
+        )
+
+    if assumed_wage:
+        reason = "assumed_wage_used"
+    elif (
+        _is_number(monthly_amount)
+        and monthly_amount <= cap_amount
+    ):
+        reason = "wage_cap_not_binding"
+    else:
+        reason = "wage_cap_applied"
+
+    cap_step = {
+        "step":
+            "monthly_wage_cap",
+        "input":
+            {
+                "policy_monthly_amount":
+                    monthly_amount,
+                "monthly_cap_ratio":
+                    monthly_cap_ratio,
+                "cap_field":
+                    cap_field,
+                "wage_used":
+                    wage_used,
+                "assumed_wage":
+                    assumed_wage,
+                "cap_amount":
+                    cap_amount,
+            },
+        "result":
+            effective_monthly_amount,
+        "reason":
+            reason,
+    }
+
+    if tier_index is not None:
+
+        cap_step[
+            "tier_index"
+        ] = tier_index
+
+    return effective_monthly_amount, cap_step
+
+
+def apply_monthly_exclusion(
+    eligible_months,
+    support: Dict,
+    rule_input: Dict,
+):
+    """Reduce eligible_months by the provided count of non-payable months.
+
+    Returns (adjusted_eligible_months, exclusion_step or None). Active only when
+    the support declares a truthy monthly_exclusion marker. The excluded-month
+    count is read from input (excluded_months_field); a missing/invalid value
+    means 0 excluded (no reduction) and is recorded as "no_exclusion_data" so
+    reviewers can see no attendance data was supplied. Nothing is inferred.
+    """
+
+    if not support.get("monthly_exclusion"):
+
+        return eligible_months, None
+
+    excluded_field = support.get(
+        "excluded_months_field",
+        DEFAULT_EXCLUDED_MONTHS_FIELD
+    )
+
+    raw_excluded = get_nested_value(
+        rule_input,
+        excluded_field
+    )
+
+    if (
+        raw_excluded is MISSING
+        or not isinstance(raw_excluded, int)
+        or isinstance(raw_excluded, bool)
+        or raw_excluded < 0
+    ):
+
+        excluded_months = 0
+        reason = "no_exclusion_data"
+
+    else:
+
+        excluded_months = raw_excluded
+        reason = "monthly_exclusion_applied"
+
+    adjusted_eligible_months = max(
+        0,
+        eligible_months - excluded_months
+    )
+
+    exclusion_step = {
+        "step":
+            "monthly_exclusion",
+        "input":
+            {
+                "eligible_months":
+                    eligible_months,
+                "excluded_months_field":
+                    excluded_field,
+                "excluded_months":
+                    excluded_months,
+            },
+        "result":
+            adjusted_eligible_months,
+        "reason":
+            reason,
+    }
+
+    return adjusted_eligible_months, exclusion_step
+
+
 def calculate_monthly_fixed_policy_support(
     policy_json: Dict,
     rule_input: Dict,
@@ -758,60 +972,89 @@ def calculate_monthly_fixed_policy_support(
         )
         duration_reason = "policy_max_months_applied"
 
-    estimated_total_amount = calculate_monthly_fixed_amount(
+    adjusted_eligible_months, exclusion_step = apply_monthly_exclusion(
+        eligible_months,
+        support,
+        rule_input,
+    )
+
+    effective_monthly_amount, cap_step = apply_monthly_wage_cap(
         monthly_amount,
-        eligible_months
+        support,
+        rule_input,
+    )
+
+    estimated_total_amount = calculate_monthly_fixed_amount(
+        effective_monthly_amount,
+        adjusted_eligible_months
+    )
+
+    calculation_steps = [
+        {
+            "step":
+                "condition_evaluation",
+            "input":
+                {
+                    "conditions":
+                        conditions
+                },
+            "result":
+                "passed"
+        },
+        {
+            "step":
+                "eligible_months",
+            "input":
+                {
+                    "requested_months":
+                        requested_months,
+                    "max_months":
+                        max_months
+                },
+            "result":
+                eligible_months,
+            "reason":
+                duration_reason
+        },
+    ]
+
+    if exclusion_step is not None:
+
+        calculation_steps.append(
+            exclusion_step
+        )
+
+    if cap_step is not None:
+
+        calculation_steps.append(
+            cap_step
+        )
+
+    calculation_steps.append(
+        {
+            "step":
+                "monthly_fixed_calculation",
+            "input":
+                {
+                    "monthly_amount":
+                        effective_monthly_amount,
+                    "eligible_months":
+                        adjusted_eligible_months
+                },
+            "result":
+                estimated_total_amount
+        }
     )
 
     base_result.update({
         "status":
             "calculated",
         "eligible_months":
-            eligible_months,
+            adjusted_eligible_months,
         "estimated_total_amount":
             estimated_total_amount,
         "calculation_steps":
-            [
-                {
-                    "step":
-                        "condition_evaluation",
-                    "input":
-                        {
-                            "conditions":
-                                conditions
-                        },
-                    "result":
-                        "passed"
-                },
-                {
-                    "step":
-                        "eligible_months",
-                    "input":
-                        {
-                            "requested_months":
-                                requested_months,
-                            "max_months":
-                                max_months
-                        },
-                    "result":
-                        eligible_months,
-                    "reason":
-                        duration_reason
-                },
-                {
-                    "step":
-                        "monthly_fixed_calculation",
-                    "input":
-                        {
-                            "monthly_amount":
-                                monthly_amount,
-                            "eligible_months":
-                                eligible_months
-                        },
-                    "result":
-                        estimated_total_amount
-                }
-            ]
+            calculation_steps
     })
 
     return base_result
@@ -1034,8 +1277,15 @@ def calculate_period_tiered_policy_support(
             "monthly_amount"
         )
 
-        tier_amount = calculate_monthly_fixed_amount(
+        effective_monthly_amount, cap_step = apply_monthly_wage_cap(
             monthly_amount,
+            support,
+            rule_input,
+            tier_index=tier_index,
+        )
+
+        tier_amount = calculate_monthly_fixed_amount(
+            effective_monthly_amount,
             applied_months
         )
 
@@ -1054,6 +1304,12 @@ def calculate_period_tiered_policy_support(
         eligible_months += applied_months
         estimated_total_amount += tier_amount
 
+        if cap_step is not None:
+
+            calculation_steps.append(
+                cap_step
+            )
+
         calculation_steps.append({
             "tier_index":
                 tier_index,
@@ -1064,7 +1320,7 @@ def calculate_period_tiered_policy_support(
             "applied_months":
                 applied_months,
             "monthly_amount":
-                monthly_amount,
+                effective_monthly_amount,
             "result":
                 tier_amount,
             "evidence_snippets":
@@ -1085,6 +1341,199 @@ def calculate_period_tiered_policy_support(
     })
 
     return base_result
+
+
+def _cost_share_error(
+    base_result: Dict,
+    reason: str,
+    failed_input,
+) -> Dict:
+
+    base_result.update({
+        "status":
+            "calculation_error",
+        "eligible":
+            False,
+        "estimated_total_amount":
+            None,
+        "calculation_steps":
+            [
+                {
+                    "step":
+                        "condition_evaluation",
+                    "result":
+                        "passed"
+                },
+                {
+                    "step":
+                        "cost_share_validation",
+                    "input":
+                        failed_input,
+                    "result":
+                        "failed",
+                    "reason":
+                        reason
+                }
+            ]
+    })
+
+    return base_result
+
+
+def calculate_cost_share_policy_support(
+    policy_json: Dict,
+    rule_input: Dict,
+    requested_months: int = 0
+) -> Dict:
+    """Cost-share support: min(actual_cost * support_ratio, max_support_amount).
+
+    support_ratio and max_support_amount are source-backed policy values; the
+    actual cost is a provided input (cost_field). No cost is inferred.
+    """
+
+    skipped_result, base_result, support_item, support = (
+        prepare_approved_calculation(
+            policy_json,
+            rule_input,
+            COST_SHARE,
+            requested_months,
+            "cost_share_calculation"
+        )
+    )
+
+    if skipped_result is not None:
+
+        skipped_result[
+            "estimated_total_amount"
+        ] = None
+
+        return skipped_result
+
+    support_ratio = support.get(
+        "support_ratio"
+    )
+    max_support_amount = support.get(
+        "max_support_amount"
+    )
+    cost_field = support.get(
+        "cost_field",
+        "company.investment_cost"
+    )
+
+    base_result.update({
+        "eligible":
+            True,
+        "support_ratio":
+            support_ratio,
+        "max_support_amount":
+            max_support_amount,
+    })
+
+    if not _is_number(support_ratio):
+
+        return _cost_share_error(
+            base_result,
+            "support_ratio_invalid",
+            support_ratio,
+        )
+
+    actual_cost = get_nested_value(
+        rule_input,
+        cost_field
+    )
+
+    if actual_cost is MISSING or not _is_number(actual_cost):
+
+        return _cost_share_error(
+            base_result,
+            "cost_input_missing",
+            {
+                "cost_field":
+                    cost_field,
+                "actual_cost":
+                    None
+                    if actual_cost is MISSING
+                    else actual_cost,
+            },
+        )
+
+    raw_support_amount = actual_cost * support_ratio
+
+    if _is_number(max_support_amount):
+
+        capped_amount = min(
+            raw_support_amount,
+            max_support_amount
+        )
+        cap_applied = capped_amount < raw_support_amount
+
+    else:
+
+        capped_amount = raw_support_amount
+        cap_applied = False
+
+    estimated_total_amount = int(
+        round(
+            capped_amount
+        )
+    )
+
+    base_result.update({
+        "status":
+            "calculated",
+        "actual_cost":
+            actual_cost,
+        "estimated_total_amount":
+            estimated_total_amount,
+        "calculation_steps":
+            [
+                {
+                    "step":
+                        "condition_evaluation",
+                    "input":
+                        {
+                            "conditions":
+                                support_item.get(
+                                    "conditions",
+                                    []
+                                )
+                        },
+                    "result":
+                        "passed"
+                },
+                {
+                    "step":
+                        "cost_share_calculation",
+                    "input":
+                        {
+                            "actual_cost":
+                                actual_cost,
+                            "support_ratio":
+                                support_ratio,
+                            "max_support_amount":
+                                max_support_amount
+                        },
+                    "result":
+                        estimated_total_amount,
+                    "reason":
+                        "max_support_amount_applied"
+                        if cap_applied
+                        else "support_ratio_applied"
+                }
+            ]
+    })
+
+    return base_result
+
+
+def _is_number(
+    value
+) -> bool:
+
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+    )
 
 
 def calculate_base_policy_support(
@@ -1120,6 +1569,14 @@ def calculate_base_policy_support(
     if calculation_type == PERIOD_TIERED:
 
         return calculate_period_tiered_policy_support(
+            policy_json,
+            rule_input,
+            requested_months
+        )
+
+    if calculation_type == COST_SHARE:
+
+        return calculate_cost_share_policy_support(
             policy_json,
             rule_input,
             requested_months
@@ -1382,7 +1839,7 @@ def calculate_conditional_bonus_policy_support(
             bonus
         )
 
-        condition_result = evaluate_operator_conditions(
+        condition_result = evaluate_conditions_with_groups(
             rule_input,
             bonus.get(
                 "conditions",

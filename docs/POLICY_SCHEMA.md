@@ -166,6 +166,86 @@ Validation rules:
 
 This schema only defines and validates rules. Runtime conflict checks, exclusion logic, and combination optimization are separate future code paths.
 
+## Cost-Share Calculation Type
+
+Some subsidies pay a percentage of the employer's actual cost (investment, installation, or usage fee) with a maximum cap, rather than a fixed monthly amount. These use `calculation_type="cost_share"`:
+
+```json
+{
+  "support_item_id": "SI-001",
+  "calculation_type": "cost_share",
+  "support_ratio": 0.8,
+  "max_support_amount": 10000000,
+  "conditions": [],
+  "evidence_snippets": ["투자비의 80%, 한도 1,000만원"]
+}
+```
+
+- `support_ratio` is the fraction (80% -> 0.8); `max_support_amount` is the cap in won (omit/null when the source states no cap).
+- The engine computes `min(actual_cost * support_ratio, max_support_amount)`, where the actual cost is a provided input field (`cost_field`, default `company.investment_cost`). No cost is inferred. A missing cost input yields `calculation_error`, not a guessed amount.
+- Do not convert a percentage-of-cost subsidy into a fake `monthly_amount`.
+
+## Monthly Wage Cap
+
+Some subsidies cap the per-month amount at a fraction of the employee's wage (예: `월별 지원액은 임금액의 80%를 초과할 수 없음`). This is expressed with an optional `monthly_cap_ratio` on the support item (and an optional `cap_field`, default `employee.monthly_wage`):
+
+```json
+{
+  "support_item_id": "SI-001",
+  "calculation_type": "monthly_fixed",
+  "monthly_amount": 1400000,
+  "monthly_cap_ratio": 0.8,
+  "conditions": [],
+  "evidence_snippets": ["임금액의 80%를 초과할 수 없음"]
+}
+```
+
+- The engine computes `effective_monthly = min(policy_monthly, wage * monthly_cap_ratio)` for `monthly_fixed` and `period_tiered` (each tier capped by the same ceiling), and records a `monthly_wage_cap` calculation step.
+- The cap applies only when `monthly_cap_ratio` is present (0 < ratio <= 1); policies without it are unchanged.
+- When the wage input is missing, the engine uses an explicit assumed wage (`ASSUMED_DEFAULT_MONTHLY_WAGE`) and marks the step reason `assumed_wage_used` so reviewers can see the assumption — it never silently fabricates and never blocks.
+
+## Monthly Exclusion (해당월 부지급)
+
+Some subsidies are not paid for a specific month when a per-month condition is violated (예: `출퇴근기록 누락일수가 월 3일 초과 시 해당월의 장려금은 지원하지 않음`). The exact trigger depends on attendance data the engine does not hold, so the support item only declares `"monthly_exclusion": true` (with an optional `excluded_months_field`, default `leave_event.excluded_months`). The engine subtracts the provided count of non-payable months from the eligible months:
+
+```json
+{
+  "support_item_id": "SI-001",
+  "calculation_type": "monthly_fixed",
+  "monthly_amount": 1400000,
+  "monthly_exclusion": true,
+  "conditions": [],
+  "evidence_snippets": ["출퇴근기록 누락일수가 월 3일 초과(4일 이상) 시 해당월의 장려금은 지원하지 않음"]
+}
+```
+
+- `adjusted_eligible_months = max(0, eligible_months - excluded_months)`; total uses the adjusted months. A `monthly_exclusion` calculation step is recorded.
+- A missing excluded-months input means 0 excluded (full payment) with step reason `no_exclusion_data` — the engine never infers which months are excluded.
+- Active only on `monthly_fixed` support items. period_tiered is out of scope (which tier loses a month is ambiguous).
+
+## Condition Groups (OR / AND)
+
+Alternatives stated in the source (`또는`/`이거나`/`중 하나`) are represented as a condition group inside a support item's `conditions` array, not as separate AND conditions:
+
+```json
+{
+  "condition_group_id": "CG-001",
+  "mode": "or",
+  "conditions": [
+    {"condition_id": "C-010", "field": "employee.child_age", "operator": "lte", "expected": 12, "evidence_snippets": ["만 12세 이하"]},
+    {"condition_id": "C-011", "field": "employee.child_school_grade", "operator": "lte", "expected": 6, "evidence_snippets": ["초등학교 6학년 이하"]}
+  ],
+  "evidence_snippets": ["만 12세 이하 또는 초등학교 6학년 이하"]
+}
+```
+
+Validation rules (`services/policy_extraction_candidate_validator.py`):
+
+- Allowed group fields: `condition_group_id`, `mode`, `conditions`, `evidence_snippets`.
+- `mode` must be `or` or `and`; `condition_group_id` is required.
+- `conditions` must be a non-empty list of normal conditions; member `condition_id` values share the same global-uniqueness rule.
+- The rule engine evaluates groups with `evaluate_conditions_with_groups` (`or` passes if any member passes; `and` if all do).
+
 ## Condition Type Discipline
 
 Condition types must be selected from a registered list handled by the code-based rule engine. If extraction produces an unknown condition type, the policy must remain unapproved or the condition registry and tests must be updated.

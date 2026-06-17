@@ -761,14 +761,129 @@
       "id": "condition-type-coverage-audit",
       "name": "Condition type coverage audit",
       "area": "rule_engine",
-      "status": "not_started",
-      "implemented_in": [],
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/condition_coverage_auditor.py",
+        "match_agent_v0.8/match_agent_v0.8/services/condition_evaluator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_condition_coverage_auditor.py",
+        "scripts/audit_condition_type_coverage.py"
+      ],
       "depends_on": [
         "existing-condition-evaluator",
         "policy-approval-gate",
         "rule-engine-operator-validation"
       ],
-      "notes": "Compare policy JSON condition types with code-supported registry and tests."
+      "notes": "Read-only audit comparing policy JSON condition types/operators against SUPPORTED_CONDITION_TYPES and SUPPORTED_OPERATORS. Live audit over data/policy_json found 7 supported types vs 52 unsupported, quantifying the silent-failure risk and producing a prioritized gap list. Does not change policy JSON, evaluation, or recommendation behavior."
+    },
+    {
+      "id": "rule-engine-or-condition-groups",
+      "name": "Rule Engine OR/AND condition groups",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/condition_evaluator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_condition_group_evaluator.py",
+        "docs/RULE_ENGINE.md"
+      ],
+      "depends_on": [
+        "rule-engine-operator-validation"
+      ],
+      "notes": "Adds evaluate_condition_group and evaluate_conditions_with_groups for {condition_group_id, mode: or|and, conditions} groups (roadmap Stage 8.1). OR passes if any member passes; AND if all pass; empty/unsupported-mode groups do not pass. Backward compatible: no-group lists match evaluate_operator_conditions, which is unchanged. Now wired into calculation_service (support-item and conditional-bonus precondition paths) with group evidence collected into results; verified end-to-end by test_condition_group_calculation_integration."
+    },
+    {
+      "id": "rule-engine-or-condition-groups-calculation-integration",
+      "name": "OR/AND condition groups in calculation pipeline",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_condition_group_calculation_integration.py"
+      ],
+      "depends_on": [
+        "rule-engine-or-condition-groups",
+        "monthly-fixed-amount-calculation",
+        "conditional-bonus-amount-calculation"
+      ],
+      "notes": "Switches calculation_service precondition evaluation (support-item and bonus conditions) to evaluate_conditions_with_groups and collects group evidence, making OR/AND groups affect real eligibility and amount calculation. Backward compatible; 12 calculation/recommendation tests pass with no regression."
+    },
+    {
+      "id": "cost-share-calculation-type",
+      "name": "Cost-share (percentage-of-cost) calculation type",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_cost_share_calculation.py",
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py",
+        "prompts/policy_extraction_v6.md",
+        "docs/POLICY_SCHEMA.md"
+      ],
+      "depends_on": [
+        "standardized-policy-calculation-result",
+        "policy-extraction-v6-prompt-and-model-upgrade"
+      ],
+      "notes": "Adds calculation_type cost_share = min(actual_cost * support_ratio, max_support_amount) for percentage-of-cost subsidies (e.g. flexible_work_system_support 투자비 80% 한도 1,000만). support_ratio/max_support_amount are source-backed; actual cost is a provided input (cost_field); nothing is inferred (missing cost/ratio -> calculation_error, absent cap -> no cap). Wired through calculate_base_policy_support and normalize_policy_calculation_result, accepted by the candidate validator, and emitted by policy_extraction_v6. Verified live: flexible_work_system_support now extracts two cost_share items instead of an invented monthly_amount. 13 calculation/validator tests pass."
+    },
+    {
+      "id": "monthly-exclusion-calculation",
+      "name": "Monthly exclusion (per-month nonpayment)",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_monthly_exclusion.py",
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/services/rule_engine_domain_adapter.py",
+        "prompts/policy_extraction_v6.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/RULE_ENGINE.md"
+      ],
+      "depends_on": [
+        "monthly-fixed-amount-calculation",
+        "monthly-wage-cap-calculation"
+      ],
+      "notes": "Adds a boolean support-item marker monthly_exclusion: when set, the engine reduces eligible months by a provided non-payable-month count (excluded_months_field, default leave_event.excluded_months): adjusted = max(0, eligible_months - excluded_months). A missing count means 0 excluded (no_exclusion_data step, full payment); nothing is inferred. Scope is monthly_fixed only (period_tiered tier-month attribution is ambiguous). Active only with the marker, so existing policies are unchanged. Validator accepts monthly_exclusion (boolean) + excluded_months_field; policy_extraction_v6 sets the marker for 해당월 부지급 rules instead of unresolved_rules. Verified live: childcare_flexible_start_support extracts monthly_exclusion: true and drops monthly_exclusion_rule from unresolved. 16 tests pass. Completes option A with monthly-wage-cap-calculation."
+    },
+    {
+      "id": "monthly-wage-cap-calculation",
+      "name": "Monthly wage cap (per-wage monthly ceiling)",
+      "area": "rule_engine",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/calculation_service.py",
+        "match_agent_v0.8/match_agent_v0.8/test_monthly_wage_cap.py",
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/services/rule_engine_domain_adapter.py",
+        "prompts/policy_extraction_v6.md",
+        "docs/POLICY_SCHEMA.md",
+        "docs/RULE_ENGINE.md"
+      ],
+      "depends_on": [
+        "monthly-fixed-amount-calculation",
+        "period-tiered-amount-calculation",
+        "cost-share-calculation-type"
+      ],
+      "notes": "Adds an optional monthly_cap_ratio on support items: effective_monthly = min(policy_monthly, wage * monthly_cap_ratio) for monthly_fixed and period_tiered (each tier capped by the shared ceiling). Wage read from cap_field (default employee.monthly_wage, passed through by the domain adapter); a missing wage uses an explicit assumed wage (3,000,000) with an assumed_wage_used calculation step rather than fabricating silently or erroring. Active only when monthly_cap_ratio is present, so existing policies are unchanged. Validator accepts/validates monthly_cap_ratio in (0,1]; policy_extraction_v6 emits it for 임금의 N% 초과 불가 rules instead of unresolved_rules. Verified live: replacement_workshare_support extracts monthly_cap_ratio=0.8 on all items. 15 calculation/validator/adapter tests pass."
+    },
+    {
+      "id": "or-condition-groups-extraction-and-validation",
+      "name": "OR condition groups in extraction prompt and validator",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py",
+        "prompts/policy_extraction_v6.md",
+        "docs/POLICY_SCHEMA.md"
+      ],
+      "depends_on": [
+        "rule-engine-or-condition-groups",
+        "policy-extraction-v6-prompt-and-model-upgrade"
+      ],
+      "notes": "Extends the candidate validator to accept and validate condition groups (mode or/and, required condition_group_id, non-empty members sharing global id uniqueness; new errors missing_condition_group_id, unsupported_condition_group_mode, empty_condition_group), and updates policy_extraction_v6 to emit OR alternatives as one mode=or group instead of separate ANDed conditions. Verified live: gpt-4.1 emits a valid OR group for 만 12세 이하 또는 초등학교 6학년 이하 once the rule is placed at the top of the prompt. Completes the OR pipeline end-to-end (prompt -> model -> validator -> calculation engine)."
     },
     {
       "id": "onboarding-minimum-save-flow",

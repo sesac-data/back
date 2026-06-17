@@ -6,6 +6,8 @@ Return JSON only. Do not include Markdown, comments, prose, or code fences.
 
 This output is a review candidate. It is never an approved policy.
 
+CRITICAL RULE — OR alternatives: whenever the source says one of several options qualifies (joined by `또는`, `이거나`, or `중 하나`), you MUST output exactly one condition group object `{ "condition_group_id": ..., "mode": "or", "conditions": [...] }` placed inside the support item's `conditions` array. You must NOT output the alternatives as two separate conditions, because separate conditions are ANDed and would wrongly require all of them. Concretely, `만 12세 이하 또는 초등학교 6학년 이하` MUST become one `mode="or"` group containing a `employee.child_age <= 12` member and a `employee.child_school_grade <= 6` member. See "OR Conditions" for the exact shape.
+
 This prompt is policy-agnostic. Do not assume a fixed calculation type. Read the source and choose the structure that matches the source.
 
 ## System-Owned Metadata Boundary
@@ -92,6 +94,7 @@ Each support item must declare exactly one `calculation_type`. Allowed values ar
 - `monthly_fixed`
 - `period_tiered`
 - `conditional_bonus`
+- `cost_share`
 
 Choose the type from the source, not from a fixed assumption. Use these decision rules.
 
@@ -180,6 +183,27 @@ Model the base amount as the support item and the extra amount as a bonus. Do no
 }
 ```
 
+### Use `cost_share` when
+
+The source pays a PERCENTAGE of the employer's actual cost (investment, installation, or usage fee), usually with a maximum cap, rather than a fixed monthly amount.
+
+Signals: `투자비의 N%`, `비용의 N% 지원`, `소요 비용의 N%`, `한도 N만원`, `100분의 N`.
+
+```json
+{
+  "support_item_id": "SI-001",
+  "calculation_type": "cost_share",
+  "support_ratio": 0.8,
+  "max_support_amount": 10000000,
+  "conditions": [],
+  "evidence_snippets": ["투자비의 80%, 한도 1,000만원"]
+}
+```
+
+- `support_ratio` is the fraction (80% -> `0.8`, 100% -> `1.0`).
+- `max_support_amount` is the cap in won. If the source states no cap, omit it or set it to `null` (do not invent a cap).
+- Do not convert a percentage-of-cost subsidy into a fake `monthly_amount`. If the support is a percentage of cost, it is `cost_share`, never `monthly_fixed`.
+
 ### Shared support item rules
 
 Every support item must include `support_item_id`, `calculation_type`, `conditions`, and `evidence_snippets`.
@@ -187,6 +211,9 @@ Every support item must include `support_item_id`, `calculation_type`, `conditio
 - `monthly_fixed` items must also include `monthly_amount` and `max_months`.
 - `period_tiered` items must also include `tiers`.
 - `conditional_bonus` items must also include `monthly_amount`, `max_months`, and `bonuses`.
+- `cost_share` items must also include `support_ratio` (and `max_support_amount` when the source states a cap).
+
+When the source caps the monthly amount at a percentage of the employee's wage (예: `월별 지원액은 임금액의 80%를 초과할 수 없음`), add `monthly_cap_ratio` to that support item (80% -> `0.8`). Do not route this to `unresolved_rules`. Example: `{"support_item_id": "SI-001", "calculation_type": "monthly_fixed", "monthly_amount": 1400000, "monthly_cap_ratio": 0.8, "conditions": [], "evidence_snippets": ["임금액의 80%를 초과할 수 없음"]}`.
 
 Do not use calculation type aliases such as `fixed_amount`, `fixed_monthly`, `monthly`, `period`, `bonus`, or `support_type`.
 
@@ -249,32 +276,62 @@ Field naming guidance:
 
 If a needed field is not in this list, create a clear, descriptive `field` name in the same `area.attribute` style. Do not invent a numeric value that is not in the source.
 
-Break complex source sentences into separate atomic conditions. If one sentence contains multiple requirements, create one condition per requirement. Separate period conditions, weekly hour conditions, daily hour conditions, lower and upper bounds, boolean operational requirements, and parenthetical provisos.
+Break complex source sentences into separate atomic conditions. If one sentence contains multiple requirements that must ALL hold (AND), create one condition per requirement. Separate period conditions, weekly hour conditions, daily hour conditions, lower and upper bounds, boolean operational requirements, and parenthetical provisos.
+
+Exception for alternatives (OR): if the requirements are alternatives joined by `또는`/`이거나`/`중 하나`, they must NOT be split into separate top-level conditions, because separate top-level conditions are ANDed and would wrongly require all of them. Put alternatives in one condition group with `mode="or"` (see "OR Conditions" below). For example, `만 12세 이하 또는 초등학교 6학년 이하` is ONE `mode="or"` group with two member conditions, never two separate top-level conditions.
 
 `condition_id` values must be globally unique across the entire candidate JSON, including conditions inside bonuses and inside different support items. Assign condition IDs as one global increasing sequence such as `C-001`, `C-002`, `C-003`. If the same semantic condition repeats, create a new unique `condition_id` each time. Do not reuse an ID.
+
+### OR Conditions (condition groups)
+
+When the source states that one of several alternatives is enough (an OR requirement), do NOT split it into separate AND conditions and do NOT move it to `unresolved_rules`. Express it as a condition group inside the same `conditions` array:
+
+```json
+{
+  "condition_group_id": "CG-001",
+  "mode": "or",
+  "conditions": [
+    {"condition_id": "C-010", "field": "employee.child_age", "operator": "lte", "expected": 12, "evidence_snippets": ["만 12세 이하"]},
+    {"condition_id": "C-011", "field": "employee.child_school_grade", "operator": "lte", "expected": 6, "evidence_snippets": ["초등학교 6학년 이하"]}
+  ],
+  "evidence_snippets": ["만 12세 이하 또는 초등학교 6학년 이하"]
+}
+```
+
+Rules for condition groups:
+
+- Use `mode="or"` for `또는`/`이거나`/`중 하나` alternatives; use `mode="and"` only if you need to nest a sub-requirement (normally top-level conditions are already AND).
+- `condition_group_id` is required and must be globally unique like other ids.
+- Member `condition_id` values must also be globally unique across the whole candidate.
+- Every member condition uses the normal strict condition shape (`condition_id`, `field`, `operator`, `expected`, `evidence_snippets`).
+- Only move an OR rule to `unresolved_rules` with `rule_type="unsupported_or_condition"` when the alternatives cannot be expressed as field/operator/expected conditions. A clear `만 12세 이하 또는 초등학교 6학년 이하` must be a condition group, not unresolved.
 
 ## Monthly Exclusion Rules
 
 Do not encode monthly nonpayment or monthly exclusion rules as conditions. Do not output them as `risk_conditions`.
 
-Rules such as:
+Rules where the support is NOT PAID for a specific affected month, such as:
 
 - missing clock-in or clock-out records exceeding 3 days in the month
 - 4 or more missing attendance record days in the month
-- overtime exceeding a stated number of hours in the month
-- any rule where the support is not paid only for that affected month
+- overtime exceeding a stated number of hours in the month (the support is withheld only for that month)
 
-must be placed in `unresolved_rules` with `rule_type="monthly_exclusion_rule"`.
+are handled by setting `"monthly_exclusion": true` on the affected support item, and keeping the exact source rule as an evidence snippet on that item. Do NOT route these to `unresolved_rules`. The engine subtracts the number of non-payable months (a separate input) from the eligible months; the model only marks that the support can be excluded by month.
+
+Example:
 
 ```json
 {
-  "rule_id": "UR-001",
-  "rule_type": "monthly_exclusion_rule",
-  "evidence_snippets": ["Exact source substring"]
+  "support_item_id": "SI-001",
+  "calculation_type": "monthly_fixed",
+  "monthly_amount": 1400000,
+  "monthly_exclusion": true,
+  "conditions": [],
+  "evidence_snippets": ["출퇴근기록 누락일수가 월 3일 초과(4일 이상) 시 해당월의 장려금은 지원하지 않음"]
 }
 ```
 
-Do not add `description`, `condition_type`, `value`, or `unit` to unresolved rules.
+Note: a rule that disqualifies the WHOLE policy (not just one month) is a normal condition, not a monthly exclusion.
 
 ## Combination Rules
 
@@ -295,15 +352,15 @@ Use `unresolved_rules` for source-backed rules that cannot be represented safely
 Allowed useful `rule_type` examples:
 
 ```text
-unsupported_or_condition
 ambiguous_target_policy
 complex_headcount_cap
 shared_duration_cap
 ambiguous_time_unit
-monthly_exclusion_rule
 unsupported_combination_rule
 schema_gap
 ```
+
+Note: OR conditions use condition groups, per-month exclusions use `monthly_exclusion` on the support item, and per-wage caps use `monthly_cap_ratio` — none of these go to `unresolved_rules` anymore.
 
 Each unresolved rule must include:
 
@@ -317,7 +374,7 @@ Each unresolved rule must include:
 
 Do not add `description` to unresolved rules.
 
-Use `unresolved_rules` for genuine schema gaps such as headcount caps (`전년도 말일 고용보험 피보험자 수의 30%`), shared-duration caps (`사용기간을 합산하여 최대 1년`), OR conditions (`만 12세 이하 또는 초등학교 6학년 이하`), and monthly caps (`임금액의 80%를 초과할 수 없음`). Do not use it as a dumping ground for rules the normal schema can already represent.
+Use `unresolved_rules` for genuine schema gaps such as headcount caps (`전년도 말일 고용보험 피보험자 수의 30%`) and shared-duration caps (`사용기간을 합산하여 최대 1년`). Do not use it as a dumping ground for rules the normal schema can already represent. OR conditions (`만 12세 이하 또는 초등학교 6학년 이하`) are condition groups, and per-wage monthly caps (`임금액의 80%를 초과할 수 없음`) are `monthly_cap_ratio` on the support item — neither goes to `unresolved_rules`.
 
 ## Evidence Rules
 
@@ -373,7 +430,8 @@ Before returning JSON, verify:
 - Every condition has only `condition_id`, `field`, `operator`, `expected`, and `evidence_snippets`.
 - Every `condition_id` is globally unique across the whole candidate JSON, including inside bonuses.
 - No condition contains `condition_type`, `value`, `unit`, `description`, or `risk_condition_id`.
-- Monthly nonpayment rules are in `unresolved_rules` with `rule_type="monthly_exclusion_rule"`.
+- Per-month nonpayment rules ("해당월 부지급") set `monthly_exclusion: true` on the affected support item, not `unresolved_rules`.
+- A clear OR requirement (예: `만 12세 이하 또는 초등학교 6학년 이하`) is a condition group with `mode="or"`, not separate AND conditions and not `unresolved_rules`.
 - No `UNKNOWN_POLICY_ID` exists anywhere.
 - No `combination_rules[*].target_policy_ids` is empty. Ambiguous targets are in `unresolved_rules`.
 - `source_document_id`, `source_url`, and `source_file` are empty unless present in source text.

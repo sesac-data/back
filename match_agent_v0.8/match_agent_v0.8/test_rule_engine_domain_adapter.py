@@ -51,6 +51,8 @@ def test_builds_rule_input_from_general_company_payload():
             {
                 "leave_type":
                     "parental_leave",
+                "monthly_wage":
+                    None,
             },
         "leave_event":
             {
@@ -62,6 +64,8 @@ def test_builds_rule_input_from_general_company_payload():
                     "2026-07-01",
                 "end_date":
                     "2026-10-31",
+                "excluded_months":
+                    None,
             },
         "replacement_worker":
             {

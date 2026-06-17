@@ -6,6 +6,7 @@ ALLOWED_CALCULATION_TYPES = {
     "monthly_fixed",
     "period_tiered",
     "conditional_bonus",
+    "cost_share",
 }
 
 ALLOWED_TOP_LEVEL_FIELDS = {
@@ -35,17 +36,24 @@ ALLOWED_SUPPORT_ITEM_FIELDS = {
     "applied_bonuses",
     "bonuses",
     "calculation_type",
+    "cap_field",
     "conditions",
+    "cost_field",
     "duplicate_allowed",
     "duplicate_disallowed",
     "evidence_snippets",
+    "excluded_months_field",
     "important_conditions",
     "max_months",
+    "max_support_amount",
     "monthly_amount",
+    "monthly_cap_ratio",
+    "monthly_exclusion",
     "required_documents",
     "required_systems",
     "support",
     "support_item_id",
+    "support_ratio",
     "support_type",
     "target_conditions",
     "tiers",
@@ -66,13 +74,32 @@ ALLOWED_CONDITION_FIELDS = {
     "value",
 }
 
+ALLOWED_CONDITION_GROUP_FIELDS = {
+    "condition_group_id",
+    "conditions",
+    "evidence_snippets",
+    "mode",
+}
+
+ALLOWED_CONDITION_GROUP_MODES = {
+    "and",
+    "or",
+}
+
 ALLOWED_SUPPORT_FIELDS = {
     "calculation_type",
+    "cap_field",
+    "cost_field",
     "evidence_snippets",
+    "excluded_months_field",
     "max_duration_months",
     "max_months",
+    "max_support_amount",
     "monthly_amount",
+    "monthly_cap_ratio",
+    "monthly_exclusion",
     "normalized_yearly_amount",
+    "support_ratio",
     "tiers",
     "yearly_amount",
     "yearly_max_amount",
@@ -414,8 +441,131 @@ def _validate_flat_support_fields(
                 errors,
             )
 
+    if calculation_type == "cost_share":
+        _validate_number(
+            item.get("support_ratio"),
+            f"{path}.support_ratio",
+            "invalid_support_ratio",
+            errors,
+        )
+        # max_support_amount is optional (no cap when absent); validate if present.
+        if item.get("max_support_amount") is not None:
+            _validate_number(
+                item.get("max_support_amount"),
+                f"{path}.max_support_amount",
+                "invalid_max_support_amount",
+                errors,
+            )
+
+    # monthly_exclusion is an optional boolean marker enabling per-month exclusion.
+    if item.get("monthly_exclusion") is not None:
+        if not isinstance(item.get("monthly_exclusion"), bool):
+            errors.append(
+                _error(
+                    "invalid_monthly_exclusion",
+                    f"{path}.monthly_exclusion",
+                    "monthly_exclusion must be a boolean.",
+                    actual=item.get("monthly_exclusion"),
+                )
+            )
+
+    # monthly_cap_ratio is an optional per-wage monthly cap on any calc type.
+    # When present it must be a number in (0, 1].
+    if item.get("monthly_cap_ratio") is not None:
+        monthly_cap_ratio = item.get("monthly_cap_ratio")
+        if (
+            not _is_number(monthly_cap_ratio)
+            or monthly_cap_ratio <= 0
+            or monthly_cap_ratio > 1
+        ):
+            errors.append(
+                _error(
+                    "invalid_monthly_cap_ratio",
+                    f"{path}.monthly_cap_ratio",
+                    "monthly_cap_ratio must be a number in (0, 1].",
+                    actual=monthly_cap_ratio,
+                )
+            )
+
     _validate_evidence_list(
         item.get("evidence_snippets"),
+        f"{path}.evidence_snippets",
+        raw_text,
+        errors,
+    )
+
+
+def _is_condition_group(
+    item: Any,
+) -> bool:
+
+    return (
+        isinstance(item, dict)
+        and "conditions" in item
+        and (
+            "condition_group_id" in item
+            or "mode" in item
+        )
+    )
+
+
+def _validate_condition_group(
+    group: Dict[str, Any],
+    path: str,
+    raw_text: str,
+    errors: List[Dict[str, Any]],
+    seen_condition_ids: Set[str],
+) -> None:
+
+    _check_unsupported_fields(
+        group,
+        ALLOWED_CONDITION_GROUP_FIELDS,
+        path,
+        errors,
+    )
+
+    if _is_blank(group.get("condition_group_id")):
+        errors.append(
+            _error(
+                "missing_condition_group_id",
+                f"{path}.condition_group_id",
+                "condition_group_id is required.",
+                actual=group.get("condition_group_id"),
+            )
+        )
+
+    mode = group.get("mode")
+    if mode not in ALLOWED_CONDITION_GROUP_MODES:
+        errors.append(
+            _error(
+                "unsupported_condition_group_mode",
+                f"{path}.mode",
+                "mode must be 'and' or 'or'.",
+                actual=mode,
+            )
+        )
+
+    members = group.get("conditions")
+    if not isinstance(members, list) or not members:
+        errors.append(
+            _error(
+                "empty_condition_group",
+                f"{path}.conditions",
+                "condition group must contain at least one member condition.",
+                actual=members,
+            )
+        )
+    else:
+        _validate_conditions(
+            members,
+            f"{path}.conditions",
+            raw_text,
+            errors,
+            seen_condition_ids,
+        )
+
+    _validate_evidence_list(
+        group.get("evidence_snippets"),
         f"{path}.evidence_snippets",
         raw_text,
         errors,
@@ -455,6 +605,16 @@ def _validate_conditions(
                     "condition must be an object.",
                     actual=type(condition).__name__,
                 )
+            )
+            continue
+
+        if _is_condition_group(condition):
+            _validate_condition_group(
+                condition,
+                condition_path,
+                raw_text,
+                errors,
+                seen_condition_ids,
             )
             continue
 

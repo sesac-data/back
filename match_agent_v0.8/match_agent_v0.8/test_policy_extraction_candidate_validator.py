@@ -147,6 +147,163 @@ def test_present_but_invalid_max_months_is_still_detected():
     )
 
 
+def _or_group():
+    return {
+        "condition_group_id": "CG-001",
+        "mode": "or",
+        "conditions": [
+            {
+                "condition_id": "C-AGE",
+                "field": "employee.child_age",
+                "operator": "lte",
+                "expected": 12,
+                "evidence_snippets": ["6개월 이상 근무입니다."],
+            },
+            {
+                "condition_id": "C-GRADE",
+                "field": "employee.child_school_grade",
+                "operator": "lte",
+                "expected": 6,
+                "evidence_snippets": ["6개월 이상 근무입니다."],
+            },
+        ],
+        "evidence_snippets": ["대상 조건은 6개월 이상 근무입니다."],
+    }
+
+
+def test_valid_condition_group_passes():
+    candidate = valid_candidate()
+    candidate["support_items"][0]["conditions"].append(_or_group())
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert result["passed"] is True
+    assert result["errors"] == []
+
+
+def test_condition_group_unsupported_mode_is_detected():
+    candidate = valid_candidate()
+    group = _or_group()
+    group["mode"] = "xor"
+    candidate["support_items"][0]["conditions"].append(group)
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert "unsupported_condition_group_mode" in error_types(result)
+
+
+def test_condition_group_empty_members_is_detected():
+    candidate = valid_candidate()
+    group = _or_group()
+    group["conditions"] = []
+    candidate["support_items"][0]["conditions"].append(group)
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert "empty_condition_group" in error_types(result)
+
+
+def test_condition_group_duplicate_member_condition_id_is_detected():
+    candidate = valid_candidate()
+    group = _or_group()
+    # reuse the flat condition id already present in valid_candidate (C-001)
+    group["conditions"][0]["condition_id"] = "C-001"
+    candidate["support_items"][0]["conditions"].append(group)
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert "duplicate_condition_id" in error_types(result)
+
+
+def test_valid_cost_share_support_item_passes():
+    candidate = valid_candidate()
+    candidate["support_items"][0] = {
+        "support_item_id": "SI-COST",
+        "calculation_type": "cost_share",
+        "support_ratio": 0.8,
+        "max_support_amount": 10000000,
+        "cost_field": "company.investment_cost",
+        "conditions": [],
+        "evidence_snippets": ["월 300000원, 최대 12개월 지원합니다."],
+    }
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert result["passed"] is True
+    assert result["errors"] == []
+
+
+def test_cost_share_missing_support_ratio_is_detected():
+    candidate = valid_candidate()
+    candidate["support_items"][0] = {
+        "support_item_id": "SI-COST",
+        "calculation_type": "cost_share",
+        "max_support_amount": 10000000,
+        "conditions": [],
+        "evidence_snippets": ["월 300000원, 최대 12개월 지원합니다."],
+    }
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert "invalid_support_ratio" in error_types(result)
+
+
+def test_cost_share_null_max_support_amount_is_allowed():
+    candidate = valid_candidate()
+    candidate["support_items"][0] = {
+        "support_item_id": "SI-COST",
+        "calculation_type": "cost_share",
+        "support_ratio": 1.0,
+        "max_support_amount": None,
+        "conditions": [],
+        "evidence_snippets": ["월 300000원, 최대 12개월 지원합니다."],
+    }
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert "invalid_max_support_amount" not in error_types(result)
+    assert result["passed"] is True
+
+
+def test_valid_monthly_cap_ratio_passes():
+    candidate = valid_candidate()
+    candidate["support_items"][0]["monthly_cap_ratio"] = 0.8
+    candidate["support_items"][0]["cap_field"] = "employee.monthly_wage"
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert result["passed"] is True
+    assert result["errors"] == []
+
+
+def test_out_of_range_monthly_cap_ratio_is_detected():
+    candidate = valid_candidate()
+    candidate["support_items"][0]["monthly_cap_ratio"] = 1.5
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert "invalid_monthly_cap_ratio" in error_types(result)
+
+
+def test_valid_monthly_exclusion_marker_passes():
+    candidate = valid_candidate()
+    candidate["support_items"][0]["monthly_exclusion"] = True
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert result["passed"] is True
+    assert result["errors"] == []
+
+
+def test_non_boolean_monthly_exclusion_is_detected():
+    candidate = valid_candidate()
+    candidate["support_items"][0]["monthly_exclusion"] = "yes"
+
+    result = validate_policy_extraction_candidate(candidate, RAW_TEXT)
+
+    assert "invalid_monthly_exclusion" in error_types(result)
+
+
 def test_unsupported_calculation_type_is_detected():
 
     candidate = valid_candidate()

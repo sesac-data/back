@@ -150,6 +150,10 @@ def build_rule_input(
             {
                 "leave_type":
                     leave_type,
+                "monthly_wage":
+                    employee.get(
+                        "monthly_wage"
+                    ),
             },
         "leave_event":
             {
@@ -167,6 +171,10 @@ def build_rule_input(
                 "end_date":
                     leave_event.get(
                         "end_date"
+                    ),
+                "excluded_months":
+                    leave_event.get(
+                        "excluded_months"
                     ),
             },
         "replacement_worker":
