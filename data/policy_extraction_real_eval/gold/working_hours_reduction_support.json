@@ -1,0 +1,86 @@
+{
+  "policy_id": "working_hours_reduction_support",
+  "policy_name": "소정근로시간 단축 지원(워라밸일자리 장려금)",
+  "review_status": "needs_review",
+  "support_items": [
+    {
+      "support_item_id": "SI-WLB-INCENTIVE",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 300000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-HOURS-BEFORE",
+          "field": "employee.weekly_work_hours_before",
+          "operator": "gte",
+          "expected": 35
+        },
+        {
+          "condition_id": "C-HOURS-AFTER-MIN",
+          "field": "employee.weekly_work_hours_after",
+          "operator": "gte",
+          "expected": 15
+        },
+        {
+          "condition_id": "C-HOURS-AFTER-MAX",
+          "field": "employee.weekly_work_hours_after",
+          "operator": "lte",
+          "expected": 30
+        },
+        {
+          "condition_id": "C-MIN-DURATION",
+          "field": "leave_event.duration_months",
+          "operator": "gte",
+          "expected": 1
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-WLB-WAGE-COMPENSATION",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 200000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-EMPLOYER-COMPENSATES",
+          "field": "company.wage_reduction_compensation_amount",
+          "operator": "gte",
+          "expected": 200000
+        },
+        {
+          "condition_id": "C-WC-HOURS-BEFORE",
+          "field": "employee.weekly_work_hours_before",
+          "operator": "gte",
+          "expected": 35
+        },
+        {
+          "condition_id": "C-WC-HOURS-AFTER-MIN",
+          "field": "employee.weekly_work_hours_after",
+          "operator": "gte",
+          "expected": 15
+        },
+        {
+          "condition_id": "C-WC-HOURS-AFTER-MAX",
+          "field": "employee.weekly_work_hours_after",
+          "operator": "lte",
+          "expected": 30
+        }
+      ]
+    }
+  ],
+  "combination_rules": [],
+  "unresolved_rules": [
+    {
+      "rule_id": "UR-ATTENDANCE-EXCLUSION",
+      "rule_type": "monthly_exclusion_rule"
+    },
+    {
+      "rule_id": "UR-OVERTIME-EXCLUSION",
+      "rule_type": "monthly_exclusion_rule"
+    },
+    {
+      "rule_id": "UR-HEADCOUNT-CAP",
+      "rule_type": "complex_headcount_cap"
+    }
+  ]
+}

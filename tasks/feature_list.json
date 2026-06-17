@@ -666,6 +666,40 @@
       "notes": "Narrows future LLM extraction and recommendation focus to seven childcare-related employer subsidy documents: parental_leave_reduction_support, replacement_workshare_support, worklife_balance_45_support, childcare_flexible_start_support, working_hours_reduction_support, flexible_work_incent, and flexible_work_system_support. General employment incentives such as elders_employ_incent, youth_hire_incent, employ_promo_incent, and perm_conv_incent are excluded from LLM extraction execution scope. The db_builder document loader still loads documents generally; filtering happens in the extraction runner before LLM calls. policy_extraction_v5 also forbids non-calculation output fields such as application_process, application_steps, required_documents, contact_info, faq, and qna."
     },
     {
+      "id": "policy-extraction-v6-prompt-and-model-upgrade",
+      "name": "Policy extraction prompt v6, model upgrade, and validator max_months relaxation",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "prompts/policy_extraction_v6.md",
+        "match_agent_v0.8/match_agent_v0.8/services/policy_extraction_candidate_validator.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_extraction_candidate_validator.py",
+        "scripts/run_policy_extraction_from_db_builder.py",
+        "tasks/progress.md"
+      ],
+      "depends_on": [
+        "db-builder-candidate-assembler-stage-1",
+        "parental-leave-employer-support-scope"
+      ],
+      "notes": "Replaces the per-policy monthly_fixed hardcoding of policy_extraction_v5 with a policy-agnostic v6 prompt that selects calculation_type (monthly_fixed, period_tiered, conditional_bonus) from the source, ignores page navigation, forbids cross-document condition import, and forbids table-row-merged or middle-clause-dropped evidence. Upgrades the default extraction model to gpt-4.1. Relaxes the candidate validator so monthly_fixed max_months is optional (null when the source states no cap, matching the calculation engine) while still rejecting present-but-invalid values. Live measurement over the 7 childcare documents improved validator results from 3/7 pass and 9 errors (v5 + gpt-4.1-mini, all support items wrongly monthly_fixed) to 6/7 pass and 1 error (v6 + gpt-4.1, with parental_leave correctly period_tiered + conditional_bonus). Generated candidates remain review_status=needs_review and are not auto-corrected or approved. Known limitation: temperature=0 run-to-run nondeterminism remains on the most complex table (worklife_balance_45_support). Full verify.ps1 was not run because the session sandbox blocks -ExecutionPolicy Bypass; the limited-mode policy-extraction test set was executed directly and passed."
+    },
+    {
+      "id": "policy-source-preprocessing",
+      "name": "Policy source text preprocessing before extraction",
+      "area": "policy",
+      "status": "passing",
+      "implemented_in": [
+        "match_agent_v0.8/match_agent_v0.8/services/policy_source_preprocessor.py",
+        "match_agent_v0.8/match_agent_v0.8/test_policy_source_preprocessor.py",
+        "scripts/run_policy_extraction_from_db_builder.py",
+        "tasks/progress.md"
+      ],
+      "depends_on": [
+        "policy-extraction-v6-prompt-and-model-upgrade"
+      ],
+      "notes": "Adds a deterministic preprocessor that strips crawled-page chrome (navigation header up to the first 신청하러 가기, the 30117/copyright footer, and standalone button lines) and normalizes whitespace before extraction, using the cleaned text for both the prompt and evidence validation. It only removes chrome and normalizes whitespace; it never reorders, rewrites, merges, or invents body words, and the footer cut uses the 30117 address line (not the mid-document 고객상담센터 contact line) so source-backed Q&A rules survive. Live measurement (v6 + gpt-4.1) improved structural validator results from 6/7 pass and 1 error to 7/7 pass and 0 errors with ~17% fewer prompt tokens, and made the previously flipping worklife_balance_45_support stable across two runs. Default on; --no-preprocess disables it. Known limitation: preprocessing fixes evidence/structural errors and stabilizes output but does not fix the deepest semantic flattening on the worklife multi-dimension table (still monthly_fixed x10 vs its gold conditional_bonus x4 + monthly_fixed x2), which only the gold semantic eval can detect. Full verify.ps1 was not run because the session sandbox blocks -ExecutionPolicy Bypass; the affected tests were executed directly and passed."
+    },
+    {
       "id": "recommendation-smoke-runner",
       "name": "Recommendation calculation smoke runner",
       "area": "recommendation",

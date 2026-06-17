@@ -116,6 +116,37 @@ def test_monthly_amount_type_error_is_detected():
     )
 
 
+def test_null_max_months_is_allowed_when_source_states_no_cap():
+
+    candidate = valid_candidate()
+    candidate["support_items"][0]["max_months"] = None
+
+    result = validate_policy_extraction_candidate(
+        candidate,
+        RAW_TEXT,
+    )
+
+    assert "invalid_max_months" not in error_types(
+        result
+    )
+    assert result["passed"] is True
+
+
+def test_present_but_invalid_max_months_is_still_detected():
+
+    candidate = valid_candidate()
+    candidate["support_items"][0]["max_months"] = 0
+
+    result = validate_policy_extraction_candidate(
+        candidate,
+        RAW_TEXT,
+    )
+
+    assert "invalid_max_months" in error_types(
+        result
+    )
+
+
 def test_unsupported_calculation_type_is_detected():
 
     candidate = valid_candidate()

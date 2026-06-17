@@ -1,0 +1,8 @@
+{
+  "case_id": "flexible_work_incent",
+  "policy_name": "유연근무 장려금",
+  "source_url": "https://www.worklife.kr/website_renew/index/employerSupport/flexible_work_bonus.asp",
+  "source_type": "official_page",
+  "collected_at": "2026-06-05",
+  "notes": "AI-drafted gold, pending human verification. 유연근무 장려금(재택·원격·선택·시차출퇴근). 육아기 자녀 2배 지원은 두 항목에 걸치는 배수(multiplier)라 schema_gap로 분리."
+}

@@ -1,0 +1,8 @@
+{
+  "case_id": "parental_leave_reduction_support",
+  "policy_name": "육아휴직지원금, 육아기 근로시간 단축 지원금",
+  "source_url": "https://www.worklife.kr/website_renew/index/employerSupport/parental_leave_reduction_subsidy.asp",
+  "source_type": "official_page",
+  "collected_at": "2026-06-05",
+  "notes": "AI-drafted gold (Claude Opus), pending human verification. See review_notes/parental_leave_reduction_support.md for open decisions."
+}

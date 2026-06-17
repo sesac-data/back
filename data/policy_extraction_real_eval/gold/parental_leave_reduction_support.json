@@ -1,0 +1,83 @@
+{
+  "policy_id": "parental_leave_reduction_support",
+  "policy_name": "육아휴직지원금, 육아기 근로시간 단축 지원금",
+  "review_status": "needs_review",
+  "support_items": [
+    {
+      "support_item_id": "SI-LEAVE-INFANT",
+      "calculation_type": "period_tiered",
+      "tiers": [
+        {
+          "start_month": 1,
+          "end_month": 3,
+          "monthly_amount": 1000000
+        },
+        {
+          "start_month": 4,
+          "end_month": 12,
+          "monthly_amount": 300000
+        }
+      ],
+      "conditions": [
+        {
+          "condition_id": "C-INFANT-AGE",
+          "field": "employee.child_age_months",
+          "operator": "lte",
+          "expected": 12
+        },
+        {
+          "condition_id": "C-LEAVE-MIN-DAYS",
+          "field": "leave_event.duration_days",
+          "operator": "gte",
+          "expected": 30
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-LEAVE-OLDER",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 300000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-OLDER-AGE",
+          "field": "employee.child_age_months",
+          "operator": "gt",
+          "expected": 12
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-WORKHOUR-REDUCTION",
+      "calculation_type": "conditional_bonus",
+      "monthly_amount": 300000,
+      "max_months": 12,
+      "bonuses": [
+        {
+          "bonus_id": "B-WORKHOUR-FIRST-USE",
+          "monthly_amount": 100000,
+          "max_months": 12,
+          "conditions": [
+            {
+              "condition_id": "C-WORKHOUR-FIRST-USE",
+              "field": "company.is_first_workhour_reduction_use",
+              "operator": "eq",
+              "expected": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "combination_rules": [],
+  "unresolved_rules": [
+    {
+      "rule_id": "UR-MALE-INCENTIVE",
+      "rule_type": "schema_gap"
+    },
+    {
+      "rule_id": "UR-REPLACEMENT-DUPLICATE",
+      "rule_type": "unsupported_combination_rule"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "policy_id": "childcare_flexible_start_support",
+  "policy_name": "육아기 10시 출근 지원 (워라밸장려금)",
+  "review_status": "needs_review",
+  "support_items": [
+    {
+      "support_item_id": "SI-FLEX-START",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 300000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-PRIORITY-ENTERPRISE",
+          "field": "company.is_priority_support_enterprise",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "condition_id": "C-CHILD-AGE",
+          "field": "employee.child_age",
+          "operator": "lte",
+          "expected": 12
+        },
+        {
+          "condition_id": "C-BEFORE-WORKHOURS",
+          "field": "employee.weekly_work_hours_before",
+          "operator": "gte",
+          "expected": 35
+        },
+        {
+          "condition_id": "C-AFTER-WORKHOURS-MIN",
+          "field": "employee.weekly_work_hours_after",
+          "operator": "gt",
+          "expected": 30
+        },
+        {
+          "condition_id": "C-AFTER-WORKHOURS-MAX",
+          "field": "employee.weekly_work_hours_after",
+          "operator": "lte",
+          "expected": 35
+        },
+        {
+          "condition_id": "C-DAILY-REDUCTION",
+          "field": "employee.daily_reduction_hours",
+          "operator": "gte",
+          "expected": 1
+        },
+        {
+          "condition_id": "C-NO-WAGE-CUT",
+          "field": "company.prohibits_wage_reduction",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "condition_id": "C-WORK-RULES",
+          "field": "company.has_work_rules_for_reduction",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "condition_id": "C-ELECTRONIC-ATTENDANCE",
+          "field": "company.has_electronic_attendance_management",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "condition_id": "C-MIN-DURATION",
+          "field": "leave_event.duration_months",
+          "operator": "gte",
+          "expected": 1
+        }
+      ]
+    }
+  ],
+  "combination_rules": [],
+  "unresolved_rules": [
+    {
+      "rule_id": "UR-CHILD-AGE-OR",
+      "rule_type": "unsupported_or_condition"
+    },
+    {
+      "rule_id": "UR-ATTENDANCE-EXCLUSION",
+      "rule_type": "monthly_exclusion_rule"
+    },
+    {
+      "rule_id": "UR-OVERTIME-EXCLUSION",
+      "rule_type": "monthly_exclusion_rule"
+    },
+    {
+      "rule_id": "UR-HEADCOUNT-CAP",
+      "rule_type": "complex_headcount_cap"
+    },
+    {
+      "rule_id": "UR-SHARED-DURATION-CAP",
+      "rule_type": "shared_duration_cap"
+    },
+    {
+      "rule_id": "UR-STATUTORY-REDUCTION-OVERLAP",
+      "rule_type": "unsupported_combination_rule"
+    }
+  ]
+}

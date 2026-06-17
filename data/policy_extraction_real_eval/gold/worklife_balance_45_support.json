@@ -1,0 +1,246 @@
+{
+  "policy_id": "worklife_balance_45_support",
+  "policy_name": "워라밸+4.5 프로젝트",
+  "review_status": "needs_review",
+  "support_items": [
+    {
+      "support_item_id": "SI-50UP-PARTIAL",
+      "calculation_type": "conditional_bonus",
+      "monthly_amount": 200000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-50UP-SIZE",
+          "field": "company.employee_count",
+          "operator": "gte",
+          "expected": 50
+        },
+        {
+          "condition_id": "C-50UP-PRIORITY",
+          "field": "company.is_priority_support_enterprise",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "condition_id": "C-50UP-PARTIAL-TYPE",
+          "field": "company.implementation_type",
+          "operator": "eq",
+          "expected": "partial"
+        }
+      ],
+      "bonuses": [
+        {
+          "bonus_id": "B-50UP-PARTIAL-PREFERRED",
+          "monthly_amount": 100000,
+          "max_months": 12,
+          "conditions": [
+            {
+              "condition_id": "C-PREFERRED-INDUSTRY",
+              "field": "company.is_preferred_industry_or_site",
+              "operator": "eq",
+              "expected": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-50UP-FULL",
+      "calculation_type": "conditional_bonus",
+      "monthly_amount": 400000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-50UP-SIZE-F",
+          "field": "company.employee_count",
+          "operator": "gte",
+          "expected": 50
+        },
+        {
+          "condition_id": "C-50UP-PRIORITY-F",
+          "field": "company.is_priority_support_enterprise",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "condition_id": "C-50UP-FULL-TYPE",
+          "field": "company.implementation_type",
+          "operator": "eq",
+          "expected": "full"
+        }
+      ],
+      "bonuses": [
+        {
+          "bonus_id": "B-50UP-FULL-PREFERRED",
+          "monthly_amount": 100000,
+          "max_months": 12,
+          "conditions": [
+            {
+              "condition_id": "C-PREFERRED-INDUSTRY-F",
+              "field": "company.is_preferred_industry_or_site",
+              "operator": "eq",
+              "expected": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-20TO50-PARTIAL",
+      "calculation_type": "conditional_bonus",
+      "monthly_amount": 300000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-20TO50-MIN",
+          "field": "company.employee_count",
+          "operator": "gte",
+          "expected": 20
+        },
+        {
+          "condition_id": "C-20TO50-MAX",
+          "field": "company.employee_count",
+          "operator": "lt",
+          "expected": 50
+        },
+        {
+          "condition_id": "C-20TO50-PARTIAL-TYPE",
+          "field": "company.implementation_type",
+          "operator": "eq",
+          "expected": "partial"
+        }
+      ],
+      "bonuses": [
+        {
+          "bonus_id": "B-20TO50-PARTIAL-PREFERRED",
+          "monthly_amount": 100000,
+          "max_months": 12,
+          "conditions": [
+            {
+              "condition_id": "C-PREFERRED-INDUSTRY-20P",
+              "field": "company.is_preferred_industry_or_site",
+              "operator": "eq",
+              "expected": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-20TO50-FULL",
+      "calculation_type": "conditional_bonus",
+      "monthly_amount": 500000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-20TO50-MIN-F",
+          "field": "company.employee_count",
+          "operator": "gte",
+          "expected": 20
+        },
+        {
+          "condition_id": "C-20TO50-MAX-F",
+          "field": "company.employee_count",
+          "operator": "lt",
+          "expected": 50
+        },
+        {
+          "condition_id": "C-20TO50-FULL-TYPE",
+          "field": "company.implementation_type",
+          "operator": "eq",
+          "expected": "full"
+        }
+      ],
+      "bonuses": [
+        {
+          "bonus_id": "B-20TO50-FULL-PREFERRED",
+          "monthly_amount": 100000,
+          "max_months": 12,
+          "conditions": [
+            {
+              "condition_id": "C-PREFERRED-INDUSTRY-20F",
+              "field": "company.is_preferred_industry_or_site",
+              "operator": "eq",
+              "expected": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-NEWHIRE-50UP",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 600000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-NEWHIRE-50UP-SIZE",
+          "field": "company.employee_count",
+          "operator": "gte",
+          "expected": 50
+        },
+        {
+          "condition_id": "C-NEWHIRE-50UP-PRIORITY",
+          "field": "company.is_priority_support_enterprise",
+          "operator": "eq",
+          "expected": true
+        },
+        {
+          "condition_id": "C-NEWHIRE-50UP-FLAG",
+          "field": "company.has_new_hire_after_reduction",
+          "operator": "eq",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-NEWHIRE-20TO50",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 800000,
+      "max_months": 12,
+      "conditions": [
+        {
+          "condition_id": "C-NEWHIRE-20TO50-MIN",
+          "field": "company.employee_count",
+          "operator": "gte",
+          "expected": 20
+        },
+        {
+          "condition_id": "C-NEWHIRE-20TO50-MAX",
+          "field": "company.employee_count",
+          "operator": "lt",
+          "expected": 50
+        },
+        {
+          "condition_id": "C-NEWHIRE-20TO50-FLAG",
+          "field": "company.has_new_hire_after_reduction",
+          "operator": "eq",
+          "expected": true
+        }
+      ]
+    }
+  ],
+  "combination_rules": [],
+  "unresolved_rules": [
+    {
+      "rule_id": "UR-PREFERRED-OR-LIST",
+      "rule_type": "unsupported_or_condition"
+    },
+    {
+      "rule_id": "UR-IMPLEMENTATION-TYPE-DEF",
+      "rule_type": "unsupported_or_condition"
+    },
+    {
+      "rule_id": "UR-HEADCOUNT-CAP-REDUCTION",
+      "rule_type": "complex_headcount_cap"
+    },
+    {
+      "rule_id": "UR-HEADCOUNT-CAP-NEWHIRE",
+      "rule_type": "complex_headcount_cap"
+    },
+    {
+      "rule_id": "UR-300UP-EXTENDED-ELIGIBILITY",
+      "rule_type": "schema_gap"
+    }
+  ]
+}

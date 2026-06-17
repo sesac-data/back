@@ -9,8 +9,8 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 APP_DIR = ROOT_DIR / "match_agent_v0.8" / "match_agent_v0.8"
 DEFAULT_DOCS_ROOT = APP_DIR / "incent_docs"
 DEFAULT_OUTPUT_DIR = ROOT_DIR / "output" / "policy_extraction_from_db_builder"
-DEFAULT_MODEL = "gpt-4.1-mini"
-DEFAULT_PROMPT_VERSION = "policy_extraction_v4"
+DEFAULT_MODEL = "gpt-4.1"
+DEFAULT_PROMPT_VERSION = "policy_extraction_v6"
 PARENTAL_SUPPORT_DOCUMENT_IDS = {
     "childcare_flexible_start_support",
     "flexible_work_incent",
@@ -64,6 +64,9 @@ from services.policy_extraction_candidate_assembler import (  # noqa: E402
 from services.policy_extraction_candidate_validator import (  # noqa: E402
     validate_policy_extraction_candidate,
 )
+from services.policy_source_preprocessor import (  # noqa: E402
+    preprocess_policy_source_text,
+)
 
 
 def run_extraction_from_documents(
@@ -75,6 +78,8 @@ def run_extraction_from_documents(
     prompt_version: str,
     model: str,
     document_id: str = None,
+    preprocess: bool = True,
+    use_structured: bool = False,
 ):
 
     documents = load_policy_documents(
@@ -108,13 +113,28 @@ def run_extraction_from_documents(
 
     for document in documents:
 
+        # Prefer the table-structure-preserving source when requested and present.
+        base_source, source_kind = _load_base_source(
+            docs_root,
+            document,
+            use_structured,
+        )
+
+        # The cleaned source is used for BOTH the prompt and evidence validation
+        # so the model and the validator reference the same canonical text.
+        source_text = (
+            preprocess_policy_source_text(base_source)
+            if preprocess
+            else base_source
+        )
+
         extraction = adapter.extract(
             PolicyExtractionRequest(
                 case_id=document.document_id,
-                source_text=document.raw_text,
+                source_text=source_text,
                 prompt=build_prompt(
                     prompt_template,
-                    document.raw_text,
+                    source_text,
                 ),
                 model=model,
                 prompt_version=prompt_version,
@@ -128,7 +148,7 @@ def run_extraction_from_documents(
         )
         candidate_validation_result = validate_policy_extraction_candidate(
             assembled_candidate,
-            document.raw_text,
+            source_text,
         )
 
         output_record = {
@@ -145,6 +165,21 @@ def run_extraction_from_documents(
                 prompt_file,
             "prompt_sha256":
                 prompt_sha256,
+            "preprocessing":
+                {
+                    "enabled":
+                        preprocess,
+                    "source_kind":
+                        source_kind,
+                    "base_char_count":
+                        len(
+                            base_source
+                        ),
+                    "source_char_count":
+                        len(
+                            source_text
+                        ),
+                },
             "parsed_candidate":
                 raw_candidate,
             "assembled_candidate":
@@ -208,6 +243,34 @@ def run_extraction_from_documents(
     return results
 
 
+def _load_base_source(
+    docs_root: Path,
+    document,
+    use_structured: bool,
+):
+    """Return (text, kind): the structured source when requested and present,
+    otherwise the document's flattened raw_text."""
+
+    if use_structured:
+
+        structured_path = (
+            docs_root
+            / f"{document.document_id}_docs"
+            / f"{document.document_id}_structured.txt"
+        )
+
+        if structured_path.exists():
+
+            return (
+                structured_path.read_text(
+                    encoding="utf-8"
+                ),
+                "structured",
+            )
+
+    return document.raw_text, "raw"
+
+
 def filter_parental_support_documents(
     documents,
 ):
@@ -260,6 +323,22 @@ def main():
             DEFAULT_MODEL,
         ),
     )
+    parser.add_argument(
+        "--no-preprocess",
+        dest="preprocess",
+        action="store_false",
+        help="Send raw crawled text to the model instead of the cleaned policy body.",
+    )
+    parser.add_argument(
+        "--use-structured",
+        dest="use_structured",
+        action="store_true",
+        help="Use {incent_key}_structured.txt (table-preserving) instead of flattened raw text.",
+    )
+    parser.set_defaults(
+        preprocess=True,
+        use_structured=False,
+    )
     args = parser.parse_args()
 
     prompt_path = resolve_prompt_path(
@@ -301,6 +380,8 @@ def main():
             prompt_version=args.prompt_version,
             model=args.model,
             document_id=args.document_id,
+            preprocess=args.preprocess,
+            use_structured=args.use_structured,
         )
 
     except Exception as exc:

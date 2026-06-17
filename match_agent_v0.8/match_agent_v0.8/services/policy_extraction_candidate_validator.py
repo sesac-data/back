@@ -398,14 +398,21 @@ def _validate_flat_support_fields(
             "invalid_monthly_amount",
             errors,
         )
-        _validate_positive_integer(
+        max_months = (
             item.get("max_months")
             if "max_months" in item
-            else item.get("max_duration_months"),
-            f"{path}.max_months",
-            "invalid_max_months",
-            errors,
+            else item.get("max_duration_months")
         )
+        # max_months may be null when the source states no duration cap.
+        # The calculation engine uses requested months without inferring a cap,
+        # so an absent value must not be flagged. Only validate when present.
+        if max_months is not None:
+            _validate_positive_integer(
+                max_months,
+                f"{path}.max_months",
+                "invalid_max_months",
+                errors,
+            )
 
     _validate_evidence_list(
         item.get("evidence_snippets"),

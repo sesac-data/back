@@ -1,0 +1,80 @@
+{
+  "policy_id": "replacement_workshare_support",
+  "policy_name": "대체인력 지원금",
+  "review_status": "needs_review",
+  "support_items": [
+    {
+      "support_item_id": "SI-LEAVE-UNDER30",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 1400000,
+      "max_months": null,
+      "conditions": [
+        {
+          "condition_id": "C-LEAVE-TYPE",
+          "field": "leave_event.leave_type",
+          "operator": "in",
+          "expected": ["maternity_leave", "miscarriage_stillbirth_leave", "parental_leave"]
+        },
+        {
+          "condition_id": "C-INSURED-UNDER30",
+          "field": "company.insured_count",
+          "operator": "lt",
+          "expected": 30
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-LEAVE-OVER30",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 1300000,
+      "max_months": null,
+      "conditions": [
+        {
+          "condition_id": "C-LEAVE-TYPE",
+          "field": "leave_event.leave_type",
+          "operator": "in",
+          "expected": ["maternity_leave", "miscarriage_stillbirth_leave", "parental_leave"]
+        },
+        {
+          "condition_id": "C-INSURED-OVER30",
+          "field": "company.insured_count",
+          "operator": "gte",
+          "expected": 30
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-WORKHOUR-REDUCTION",
+      "calculation_type": "monthly_fixed",
+      "monthly_amount": 1200000,
+      "max_months": null,
+      "conditions": [
+        {
+          "condition_id": "C-WORKHOUR-TYPE",
+          "field": "leave_event.leave_type",
+          "operator": "eq",
+          "expected": "childcare_workhour_reduction"
+        }
+      ]
+    }
+  ],
+  "combination_rules": [],
+  "unresolved_rules": [
+    {
+      "rule_id": "UR-WAGE-80PCT-CAP",
+      "rule_type": "schema_gap"
+    },
+    {
+      "rule_id": "UR-DURATION-VARIABLE",
+      "rule_type": "shared_duration_cap"
+    },
+    {
+      "rule_id": "UR-EMPLOYMENT-ADJUSTMENT-EXCLUSION",
+      "rule_type": "schema_gap"
+    },
+    {
+      "rule_id": "UR-SPECIAL-CASE-DUPLICATE",
+      "rule_type": "unsupported_combination_rule"
+    }
+  ]
+}

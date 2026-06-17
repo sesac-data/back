@@ -1,0 +1,102 @@
+{
+  "policy_id": "flexible_work_incent",
+  "policy_name": "유연근무 장려금",
+  "review_status": "needs_review",
+  "support_items": [
+    {
+      "support_item_id": "SI-REMOTE-TELEWORK",
+      "calculation_type": "conditional_bonus",
+      "monthly_amount": 200000,
+      "max_months": 12,
+      "bonuses": [
+        {
+          "bonus_id": "B-REMOTE-CHILDCARE-DOUBLE",
+          "monthly_amount": 200000,
+          "max_months": 12,
+          "conditions": [
+            {
+              "condition_id": "C-REMOTE-CHILDCARE-AGE",
+              "field": "employee.has_childcare_age_child",
+              "operator": "eq",
+              "expected": true
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition_id": "C-REMOTE-TYPE",
+          "field": "employee.flexible_work_type",
+          "operator": "in",
+          "expected": ["재택근무", "원격근무"]
+        },
+        {
+          "condition_id": "C-REMOTE-DAYS",
+          "field": "employee.flexible_work_days_per_month",
+          "operator": "gte",
+          "expected": 4
+        }
+      ]
+    },
+    {
+      "support_item_id": "SI-SELECTIVE-STAGGERED",
+      "calculation_type": "conditional_bonus",
+      "monthly_amount": 300000,
+      "max_months": 12,
+      "bonuses": [
+        {
+          "bonus_id": "B-SELECTIVE-CHILDCARE-DOUBLE",
+          "monthly_amount": 300000,
+          "max_months": 12,
+          "conditions": [
+            {
+              "condition_id": "C-SELECTIVE-CHILDCARE-AGE",
+              "field": "employee.has_childcare_age_child",
+              "operator": "eq",
+              "expected": true
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition_id": "C-SELECTIVE-TYPE",
+          "field": "employee.flexible_work_type",
+          "operator": "in",
+          "expected": ["육아기 시차출퇴근", "선택근무"]
+        },
+        {
+          "condition_id": "C-SELECTIVE-MONTHLY-REDUCTION",
+          "field": "employee.flexible_work_monthly_reduction_hours",
+          "operator": "gte",
+          "expected": 6
+        },
+        {
+          "condition_id": "C-SELECTIVE-DAILY-REDUCTION",
+          "field": "employee.flexible_work_daily_reduction_hours",
+          "operator": "gte",
+          "expected": 1
+        }
+      ]
+    }
+  ],
+  "combination_rules": [],
+  "unresolved_rules": [
+    {
+      "rule_id": "UR-CHILDCARE-DOUBLE-MULTIPLIER",
+      "rule_type": "schema_gap"
+    },
+    {
+      "rule_id": "UR-HEADCOUNT-CAP",
+      "rule_type": "complex_headcount_cap"
+    },
+    {
+      "rule_id": "UR-SELECTIVE-OVERTIME-EXCLUSION",
+      "rule_type": "schema_gap"
+    },
+    {
+      "rule_id": "UR-DUPLICATE-FLEXIBLE-HISTORY",
+      "rule_type": "unsupported_combination_rule"
+    }
+  ]
+}

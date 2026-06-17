@@ -1,0 +1,21 @@
+{
+  "policy_id": "flexible_work_system_support",
+  "policy_name": "시스템 지원 (일･생활균형 시스템)",
+  "review_status": "needs_review",
+  "support_items": [],
+  "combination_rules": [],
+  "unresolved_rules": [
+    {
+      "rule_id": "UR-COST-SHARE-80PCT-10M",
+      "rule_type": "schema_gap"
+    },
+    {
+      "rule_id": "UR-SMALL-BIZ-FULL-USAGE-FEE",
+      "rule_type": "schema_gap"
+    },
+    {
+      "rule_id": "UR-USE-OBLIGATION-RETURN",
+      "rule_type": "schema_gap"
+    }
+  ]
+}
